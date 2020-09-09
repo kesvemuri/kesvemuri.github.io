@@ -1,0 +1,201 @@
+---
+title: "KKT conditions"
+author: ''
+date: '2019-03-10'
+slug: kkt-conditions
+subtitle: ''
+tags: []
+categories: Convex Optimization
+---
+
+> Note: we closely follow the presentation in the textbook by Boyd and Vandenberghe. 
+
+In this post, we begin by considering the general optimization problem:
+$$
+\begin{alignat*}{3}
+&\text{minimize} \quad && f_0(x) \\[5px]
+&\text{subject to} && f_i(x)\le 0\,, \quad && i=1,\ldots,m \\[5px]
+& && h_j(x)=0\,, \quad && j=1,\ldots,p\,
+\end{alignat*}
+$$
+with $x\in \mathbb{R}^n$. From elementary calculus, we know that relative extrema of a differentiable function $f(x)$ can be identified by solving for those $x$ that satisfy the (necessary) first-order condition $f'(x) = 0$; furthermore, this condition is sufficient if $f$ is convex. The Karush-Kuhn-Tucker (KKT) conditions serve a similar purpose in the constrained optimization setting. 
+
+### Lagrange dual function
+
+We need to introduce the concept of duality and lagrange multipliers before we proceed. The basic idea is to handle the problem's constraints by incorporating them into the objective in such a way that penalizes points $x$ that are infeasible.  
+
+---
+
+Consider the following somewhat trivial one-dimensional example:
+$$
+\begin{alignat*}{2}
+&\text{minimize} \quad && f(x)=\frac{1}{8}\big(x-5 \big)^2 - 4 \\[5px]
+&\text{subject to} \quad && x \le 2\,\,.
+\end{alignat*}
+$$
+For any fixed $\lambda > 0$, we can replace the "hard barrier" constraint with a "soft" constraint and obtain the crude simplification:
+
+$$
+\begin{alignat*}{4}
+&\text{minimize} \quad && \tilde{f}(x)= f(x) + 
+\begin{cases}
+0,  & x\le 2\\[5px]
+\infty,  &x>2
+\end{cases} \\[10px]
+& && \downarrow \\[15px]
+&\text{minimize} \quad && L(x,\lambda) = f(x) + \lambda(x-2)
+\end{alignat*}
+$$
+Basically, if the global optimal point of the objective function is infeasible (which it is in this case), we would hope that we can select $\lambda$ large enough so that the <u>penalty</u> of straying into infeasible territory ($x > 2$ here) will overwhelm the force of $f$ and push the optimal point of the augmented function $L$ into the feasible set. Below is an interactive plot demonstrating this intuition. 
+
+<iframe src="https://www.desmos.com/calculator/cda9mvcwcg?embed" width="500px" height="500px" style="border: 1px solid #ccc" frameborder=0></iframe>
+
+The feasible region $\{x\le 2\}$ is shaded in <span style="color:green">green</span>. The <span style="color:red">red</span> curve $L(x, \lambda)$ is obtained by summing the <span style="color:purple">purple</span> curve $f(x)$ and the dashed <span style="color:blue">blue</span> line $\lambda(x-2)$. As we increase $\lambda$, we observe that the optimal value of <span style="color:red">red</span> curve (rendered as an <span style="color:orange">orange</span> path) is always an _underestimate_ of $p^*$, the true optimal value of the original constrained problem (rendered as a horizontal <span style="color:black">black</span> line) or __primal__ problem. Furthermore, notice that with $\lambda^* = .75$ the optimal value of $L(x, \lambda^*)$ coincides with the optimal value of the constrained problem, and at the optimizing argument $x^*$, $L'(x, \lambda^*) \mid_{_{x=x^*}}\,\,=0$. This is no coincidence and we will return to this point in a moment. But intuitively, <u>the action of the lagrange multiplier $\lambda$ is to "roll" the graph of the objective function in such a way so that the new unconstrained optimum coincides with the original constrained optimum.</u> 
+
+---
+
+Let's generalize the construction above and apply it to the original problem. We define the __Lagrangian__ for $\lambda \succeq 0$ as 
+$$
+L(x, \lambda, \nu) \doteq f_0(x)+\sum_{i=1}^m \lambda_i\,f_i(x) + \sum_{j=1}^p \nu_j\, h_i(x)
+$$
+where $\lambda, \nu$ are known as Lagrange multipliers, and the __dual function__ is defined as 
+$$
+g(\lambda, \nu) \doteq \inf_x \;\; L(x,\lambda,\nu) 
+$$
+where this infimum is taken over the domain of the original problem (i.e. the set of $x$ for which all $f_i, h_j$ are defined). For feasible points, $L(\tilde{x},\lambda,\nu) \le f_0(\tilde{x})$ since we will have $f_i(\tilde{x}) \le 0$ and $h_j(\tilde{x}) = 0$ for all $i$ and $j$, and we see that
+$$
+g(\lambda, \nu) \le \inf_{\tilde{x} \text{ feasible}} L(\tilde{x}, \lambda, \nu) 
+\le \inf_{\tilde{x} \text{ feasible}} f_0(\tilde{x}) = p^* \tag{*}
+$$
+where $p^*$ is the optimal primal value. So for every setting of $\lambda \succeq 0$ and $\nu$, the dual function supplies a lower bound on the optimal primal value. It is natural to then ask for the _best possible lower bound_ that one can obtain using the dual function; this leads to the following __dual problem__:
+$$
+\begin{alignat*}{2}
+&\text{maximize} \quad && g(\lambda, \nu) \\[5px]
+&\text{subject to} \quad && \lambda \succeq 0\,\,.
+\end{alignat*}
+$$
+This is always a <u> convex problem </u> since the dual function $g(\lambda, \nu)$ is defined as an infimum over affine functions in $\lambda, \nu$. So we can obtain useful bounds using this duality technique even if the original problem is non-convex. 
+
+In the interactive graphic above, we can see that the optimal dual value, say $d^*$ is in fact equal to the optimal primal value $p^*$ (the orange curve and black line touch). We always have that $d^* \le p^*$ by taking supremum in $(^*)$, but the if it turns out that primal and dual optimal values satisfy $d^* = p^*$, we say that __strong duality__ holds. 
+
+<!-- ### Strong duality -->
+
+<!-- Since $g(\lambda, \nu) \le p^*$ for all values of the Lagrange multipliers, we always have that $d^* \le p^*$ or so-called <u>weak duality</u>. Recall that we can write $d^*$ as follows -->
+<!-- $$ -->
+<!-- d^* = \sup_{\lambda \succeq 0\,;\,\nu} \inf_x \;L(x, \lambda, \nu) -->
+<!-- $$ -->
+<!-- and, perhaps somewhat unexpectedly, we can express $p^*$ as  -->
+<!-- $$ -->
+<!-- p^* = \inf_x \sup_{\lambda \succeq 0\,; \,\nu} \; L(x, \lambda, \nu) -->
+<!-- $$ -->
+<!-- since  -->
+<!-- $$ -->
+<!-- \sup_{\lambda \succeq 0\,; \,\nu} \; L(x, \lambda, \nu) = \sup_{\lambda \succeq 0\,; \,\nu} \left[ f_0(x)+\sum_{i=1}^m \lambda_i\,f_i(x) + \sum_{j=1}^p \nu_j\, h_i(x) \right] =  -->
+<!-- \begin{cases} -->
+<!-- f_0(x) \quad & \text{for all }\;i,j:\;f_i(x)\le 0, \;h_j(x) = 0  \\[10px] -->
+<!-- \infty \quad & \text{otherwise} -->
+<!-- \end{cases} -->
+<!-- $$ -->
+<!-- so subsequently taking infimum over $x$ effectively restricts attention to the first branch of the conditional above which encodes precisely the feasible set. Therefore <u>strong duality</u>, the condition $d^* = p^*$, can be interpreted as a statement about the order-independence of taking supremum and infimum: -->
+<!-- $$ -->
+<!-- \sup_{\lambda \succeq 0\,;\,\nu} \inf_x \;L(x, \lambda, \nu) = \inf_x \sup_{\lambda \succeq 0\,; \,\nu} \;  -->
+<!-- L(x, \lambda, \nu) -->
+<!-- $$ -->
+<!-- The "less than" directed inequality $\le$ always holds above, and is a specific instance of what is more generally known as the _max-min inequality_.  -->
+
+<!-- That's all well and good, but how do we know when strong duality will be achieved? One such "constraint qualification" is __Slater's condition__: if the primal problem is convex, i.e. of the form  -->
+<!-- $$ -->
+<!-- \begin{alignat*}{3} -->
+<!-- &\text{minimize} \quad && f_0(x) \\[5px] -->
+<!-- &\text{subject to} && f_i(x)\le 0\,, \quad && i=1,\ldots,m \\[5px] -->
+<!-- & && Ax=b\,, \quad && A\in \mathbb{R}^{p\times n}, b\in \mathbb{R}^p -->
+<!-- \end{alignat*} -->
+<!-- $$ -->
+<!-- with $f_0, f_1,\ldots,f_m$ convex, <u> and </u> there is a point $\tilde{x}$ such that for all $i$ the inequality constraints are strict $f_i(\tilde{x}) < 0$, then strong duality holds. We refer the reader to p.234 in Boyd for a proof.  -->
+
+### KKT conditions
+
+Now we will assume that the functions $f_0, f_1, \ldots, f_m$ and $h_1, \ldots, h_p$ are differentiable. We list the KKT conditions first and then contextualize them. For any $\tilde{x}, (\tilde{\lambda}, \tilde{\nu})$ the conditions are:
+$$
+\begin{alignat}{2}
+f_i(\tilde{x}) &\le 0,  \quad &&i = 1, \ldots, m \\[5px]
+h_j(\tilde{x}) &= 0, \quad &&j = 1, \ldots, p \\[5px]
+\tilde{\lambda}_i &\ge 0, \quad &&i = 1,\ldots, m \\[5px]
+\tilde{\lambda}_i f_i(\tilde{x}) &= 0, \quad &&i = 1,\ldots, m \\[5px]
+\nabla f_0(\tilde{x}) + \sum_{i=1}^m \tilde{\lambda}_i \nabla f_i(\tilde{x}) + \sum_{j=1}^p \tilde{\nu}_j\nabla h_j(\tilde{x}) &= 0\,\,.
+\end{alignat}
+$$
+
+* The <u>first two</u> conditions are primal feasibility of $\tilde{x}$. 
+* The <u>third </u> condition is dual feasibility of $\tilde{\lambda}$. 
+* The <u>fourth </u> condition is what is known as _complementary slackness_; basically, if the unconstrained optimum does not satisfy $f_i \le 0$ (i.e. the constraint does have an impact on the location of the optimum) then the constraint should be _active_, $f_i = 0$, at the constrained optimum. (From the graphic above, the unconstrained optimal point does not satisfy the constraint, so the constraint is active at the constrained optimum.)  On the other hand, if the unconstrained optimum already satisfies $f_i \le 0$, then this constraint isn't necessary and we don't need to "roll the objective" in this direction, which means the corresponding Lagrange multiplier is 0.
+* The <u> fifth </u> condition asserts that the derivative of the Lagrangian (i.e. the "rolled" objective) is 0 at the constrained optimum: $\nabla L(x, \tilde{\lambda}, \tilde{\nu}) \mid_{_{x=x^*}}\,\,=0$. This is precisely what we observed in the graphic above. 
+
+So the logic goes as follows...
+
+---
+
+__Theorem:__ 
+
+1. If $x^*, (\lambda^*, \nu^*)$ is a pair of primal and dual optimal points with zero duality gap ($d^* = p^*$), then the KKT conditions hold for this pair. 
+2. If the primal problem is convex, i.e. if all the $f_i$ are convex and the $h_j$ are affine, then the KKT conditions holding for the pair $\tilde{x}, (\tilde{\lambda}, \tilde{\nu})$ is sufficient for this pair of points to be primal and dual optimal (with zero duality gap). 
+
+---
+>
+_Proof._ 
+If $x^*, (\lambda^*, \nu^*)$ are primal and dual optimal, then in particular, they must be primal and dual feasible, so the first three KKT conditions hold. To verify complementary slackness, notice that feasibility together with the assumption of zero duality gap implies that
+$$
+\begin{align*}
+f_0(x^*) &= g(\lambda^*, \nu^*) \\[5px]
+&= \inf_x \; \left[ f_0(x)+\sum_{i=1}^m \lambda^*_i\,f_i(x) + \sum_{j=1}^p \nu^*_j\, h_j(x) \right] \\[5px]
+&\le f_0(x^*)+\underbrace{\sum_{i=1}^m \lambda^*_i\,f_i(x^*)}_{\le 0} + \underbrace{\sum_{j=1}^p \nu^*_j\, h_j(x^*)}_{=0} \\[5px]
+&\le f_0(x^*)
+\end{align*}
+$$
+so the inequalities must be equalities, and therefore $\lambda_i^*f_i(x^*) = 0$ for all $i=1,\ldots,m$. This gives the fourth KKT condition. To verify that the fifth KKT condition holds, notice that since the inequality in the third line above is actually an equality, $x^*$ is a minimizer of the Lagrangian $L(x, \lambda^*, \nu^*)$ so the derivative of the Lagrangian must be 0 at $x^*$:
+$$
+\nabla f_0(x^*) + \sum_{i=1}^m \lambda^*_i \nabla f_i(x^*) + \sum_{j=1}^p \nu^*_j \nabla h_j(x^*) = 0\,.
+$$
+Now for part 2 of the theorem; suppose that the primal problem is convex. The first three feasibility KKT conditions imply that the Lagrangian $L(x, \tilde{\lambda}, \tilde{\nu})$ is convex. Therefore, the fifth KKT condition $\nabla L(\tilde{x}, \tilde{\lambda}, \tilde{\nu}) = 0$, implies that $\tilde{x}$ is the minimizer of the Lagrangian:
+$$
+\begin{alignat*}{2}
+\tilde{x} &= \arg\inf_x \;L(x, \tilde{\lambda}, \tilde{\nu}) \\[15px]
+\implies \quad \quad g(\tilde{\lambda}, \tilde{\nu})  &= \inf_x \; L(x, \tilde{\lambda}, \tilde{\nu}) \\[5px]
+&= L(\tilde{x}, \tilde{\lambda}, \tilde{\nu}) \\[5px]
+&= f_0(\tilde{x}) + \sum_{i=1}^m \tilde{\lambda}_i f_i(\tilde{x}) + \sum_{j=1}^p \tilde{\nu}_j h_j(\tilde{x}) \\[5px]
+&= f_0(\tilde{x})
+\end{alignat*}
+$$
+where we used the fourth KKT condition (complementary slackness), along with the third KKT condition, to conclude the last equality. From here, we see that the pair $\tilde{x}, (\tilde{\lambda}, \tilde{\nu})$ has zero duality gap and are therefore primal and dual optimal points respectively. 
+
+<br>
+<u>Part 2 of the theorem is especially important.</u> Most convex optimization algorithms can be interpreted as iterative methods for solving the KKT system. 
+
+### Constraint qualification
+
+If the problem of interest is convex, i.e. of the form
+$$
+\begin{alignat*}{3}
+&\text{minimize} \quad && f_0(x) \\[5px]
+&\text{subject to} && f_i(x)\le 0\,, \quad && i=1,\ldots,m \\[5px]
+& && Ax = b\,, \quad && A\in \mathbb{R}^{p\times n}, b\in \mathbb{R}^p
+\end{alignat*}
+$$
+for $f_0, f_1, \ldots, f_m$ convex, then when can we be sure that the duality gap is zero and conclude from part 1 of the theorem that the KKT conditions hold for any primal and dual optimal pair? 
+
+One so-called "constraint qualification" is __Slater's condition__: if there is a point $\tilde{x}$ in the interior of the domain of $f_0$ for which the inequality constraints hold with strict inequality and the equality constraints hold, 
+$$f_i(\tilde{x}) < 0 \quad \text{for all }\;i = 1,\ldots,m, \quad \quad A\tilde{x} = b$$
+then strong duality holds (assuming the problem is convex). A proof of this result can be found on page 235 of Boyd. It is worth noting that this condition is almost always met in practice, so it is safe to say that strong duality usually holds for convex problems. 
+
+
+
+
+
+
+
+
+
+
+
+
+

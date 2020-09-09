@@ -1,0 +1,116 @@
+---
+title: "Pearson’s chi-squared test"
+author: ''
+date: '2019-06-26'
+slug: pearson-s-chi-squared-test
+categories: Basics
+---
+
+The setting we consider is as follows: we observe categorical data across $k$ cells
+$$
+X^{(i)} \;\overset{\text{iid}}{\sim}\; \text{Cat}(\{e_1,...,e_k\}, \; p) \qquad \text{for }\;i = 1,\ldots,n
+$$
+where we represent the $X^{(i)}$ draws as unit vectors, or more simply we observe the counts
+$$
+(N_1,\ldots,N_k) \doteq \sum_{i=1}^n X^{(i)}\;\sim\; \text{Multinom}(\{1,\ldots,k\},\; p)
+$$
+where $\sum_{i=1}^k N_j = n$, and we would like to conduct inference on the unknown vector of proportions $p$ using the (maximum likelihood) estimator consisting of sample proportions
+$$
+\hat{p} \doteq \left( \frac{N_1}{n},\, \ldots \,, \frac{N_k}{n}\right)\;.
+$$
+This is often accomplished using the Pearson chi-squared statistic, which is defined as a sum over the $k$ cells:
+$$
+S \doteq \underbrace{\sum_{j=1}^k \frac{(\text{observed} - \text{expected})^2}{\text{expected}}}_{\text{mnemonic}} = \sum_{j=1}^k \frac{(N_j - np_j)^2}{np_j} = \sqrt{n}(\hat{p} - p)\, P^{-1}\, \sqrt{n}(\hat{p} - p)
+$$
+where $P = \text{diag}(p)$. If we assume that $n$ is large, we can derive an asymptotic distribution for this statistic. The central limit theorem tells us that 
+$$
+Y \doteq \sqrt{n}(\hat{p} - p)\; \rightsquigarrow\; \mathcal{N}_k(0, \; \text{var}(X))
+$$
+and this asymptotic variance can be evaluated as
+$$
+\begin{align*}
+\text{var}(X) &= \text{E}(XX^\mathsf{T}) - \text{E}(X)\text{E}(X)^\mathsf{T} \\[5px]
+&= \Big[\text{E}(X_iX_j) \Big]_{1\,1}^{k\,k} - pp^\mathsf{T} \\[5px]
+&= P - pp^\mathsf{T}\;.
+\end{align*}
+$$
+We note that $P - pp^\mathsf{T}$ is singular since $1^\mathsf{T}(P - pp^\mathsf{T}) 1 = 0$; this is because $Y$ actually lives on a linear subspace of $\mathbb{R}^k$ defined by the constraint $1^\mathsf{T} Y = 0$. So the asymptotic normal distribution is ``degnerate" in the above form as it is really a $k-1$ dimensional gaussian. We will now address this difficulty. 
+
+First, we see that we can do a rescaling and apply Slutsky's theorem to obtain 
+$$
+P^{-1/2}Y \; \rightsquigarrow\; \mathcal{N}_k \big(0, \; I - \sqrt{p}\sqrt{p}^\mathsf{T} \big)
+$$
+and it is simple to check that $I - \sqrt{p}\sqrt{p}^\mathsf{T}$ is a projection matrix since it is symmetric and idempotent. Now we can employ the following basic lemma:
+
+---
+
+__Lemma 1:__ 
+
+Suppose $M \in \mathbb{R}^{k\times k}$ is a projection matrix. Then every eigenvalue of $M$ equals 0 or 1. Let 
+$$
+r \doteq \text{rank}(M) = \# \text{ eigenvalues of M equal to 1}\;.
+$$
+Then if $Z \sim \mathcal{N}_k(0, M)$, it follows that $Z^\mathsf{T}Z \sim \chi^2_r$. 
+
+---
+
+>
+_Proof._
+We can write the eigenvalue decomposition $M = Q^\mathsf{T}\Lambda Q$ where $\Lambda$ is diagonal and has entries equal to the eigenvalues of $M$; since $M$ is a projection matrix, these entries are either 1 or 0. It follows that
+$$
+Q^\mathsf{T}Z\; \sim \; \mathcal{N}_k (0, \Lambda)
+$$
+and then we have
+$$
+Z^\mathsf{T}Z = (Q^\mathsf{T}Z)^\mathsf{T}(Q^\mathsf{T}Z)\; \sim \; \chi^2_r\;.
+$$
+
+---
+
+If we apply the eigenvalue decomposition to our covariance matrix and use the fact that it is a projection matrix, we see that $\text{rank}(I - \sqrt{p}\sqrt{p}^\mathsf{T}) = \text{tr}(I - \sqrt{p}\sqrt{p}^\mathsf{T}) =  k-1$. Now applying the previous lemma yields 
+$$
+S = Y^\mathsf{T} P^{-1} Y = (P^{-1/2}Y)^\mathsf{T}(P^{-1/2}Y)\; \rightsquigarrow \; \chi^2_{k-1}\;.
+$$
+So if we want to test a null hypothesis of the form 
+$$
+\mathcal{H}_0: p = p_0
+$$
+we can calculate the corresponding Pearson statistic
+$$
+S = n\,(\hat{p} - p_0) P_0^{-1}(\hat{p} - p_0)
+$$
+which asymptotically follows a $\chi^2_{k-1}$ distribution, and we reject $\mathcal{H}_0$ if $S > \chi^2_{k-1, 1 - \alpha}$ where $\alpha$ is the size of the test. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

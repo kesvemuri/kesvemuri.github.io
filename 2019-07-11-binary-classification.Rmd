@@ -1,0 +1,139 @@
+---
+title: "Binary classification"
+author: ''
+date: '2019-07-11'
+slug: binary-classification
+subtitle: ''
+tags: []
+categories: Machine Learning
+---
+
+The setup is as follows. We have a feature space $\mathcal{X} = \mathbb{R}^d$ and a label space $\mathcal{Y} = \{0, 1\}$ and there is a joint distribution $P$ over $\mathcal{X} \times \mathcal{Y}$. For example, we can think of the feature vector as the medical history of a patient and the label as indicating whether or not the patient has a particular disease. Here, we will assume the distribution $P$ is specified and look at ways in which we might evaluate the quality of a binary classifier $h:\mathcal{X} \rightarrow \mathcal{Y}$. If we imagine running the classifier on many examples (drawn iid from $P$), we could record the outcomes in a contingency table:
+
+|                         |                     |                     |         |
+| :-------------:         |:----------------:      | :----------------:             | :-:  |
+|                         | _condition positive_ $(y = 1)$  | _condition negative_ $(y=0)$  |         |
+| _predicted positive_ $(h(x)=1)$     | true positives       |  false positives               |         |
+| _predicted negative_ $(h(x)=0)$      | false negatives      |   true negatives     |         |
+|                         |                     |                  |         |
+
+
+Some useful probabilities derived from the table are listed below:
+
+* __size / false alarm rate / probability of type I error__
+
+$$
+\mathbb{P} \{h(X) = 1 \mid Y=0 \}
+$$
+
+
+* __probability of type II error__
+
+$$
+\mathbb{P} \{h(X) = 0 \mid Y=1 \}
+$$
+
+
+* __sensitivity / power / detection rate__ 
+
+$$
+\mathbb{P} \{h(X) = 1 \mid Y=1 \}
+$$
+
+* __specificity__
+
+$$
+\mathbb{P} \{h(X) = 0 \mid Y=0 \}
+$$
+
+The above quantities are prevalence-independent measures in that they are intrinsic to the test $h$ and do not depend on the prevalence of the disease in the population. Ideally, we would like a classifier that has high sensitivity and high specificity, or equivalently, low probability of type I and type II errors. It is trivial to produce a classifier that makes no type I errors, as we can simply set $h \equiv 0$; but then of course we have no sensitivity. Similarly, to produce a classifier that makes no type II errors, as we can set $h \equiv 1$; again this is not interesting since then there is no specificity. There are multiples ways in which one may attempt to combine the two criterion into a single objective. 
+
+### Learning theory perspective
+
+Learning theory focuses on the following notion of __generalization error / risk__:
+$$
+\begin{align*}
+L(h) &= \underset{(X,Y) \sim P}{\mathbf{E}}\;\big[\ell_{01}(h, (X,Y))\big] \\[5px]
+&= \underset{(X,Y) \sim P}{\mathbf{E}}\; \big[\mathbb{1}_{\{h(X) \ne Y\}}\big] \\[5px]
+&= \mathbb{P}\{h(X) \ne Y\} \\[5px]
+&= \underbrace{\mathbb{P}\{h(X)=1 \mid Y=0\}}_{\text{probability of type I error}}\mathbb{P}\{Y=0\} + \underbrace{\mathbb{P}\{h(X)=0 \mid Y=1\}}_{\text{probability of type II error}}\mathbb{P}\{Y=1\}\;.
+\end{align*}
+$$
+This objective weights the two types of error by prevalence of the disease in the population. If we knew the underlying distribution $P$, then it's straightforward to identify the best classifier with respect to the risk defined above. It's called the __Bayes optimal classifier__ and can be derived as follows:
+$$
+\begin{align*}
+L(h) &= \underset{(X,Y) \sim P}{\mathbf{E}}\; \big[\mathbb{1}_{\{h(X) \ne Y\}}\big] \\[5px]
+&= \underset{X \sim P_X}{\mathbf{E}}\;\underset{Y \sim P_{Y\mid X}}{\mathbf{E}}\; \big[\mathbb{1}_{\{h(X) \ne Y\}} \mid X\big] \\[5px]
+&= \int \left[\sum_{y=0}^1 \mathbb{1}_{\{h(x) \ne y\}}\;p(y\mid x)\right]p(x)\;dx
+\end{align*}
+$$
+and it's clear that the best choice is to set
+$$
+h^*(x) = \underset{y\in \mathcal{Y}}{\text{argmax}}\; p(y \mid x)
+$$
+and for this selection, we have $L(h^*) \le L(h)$ for all binary classifiers $h$. 
+
+
+### Hypothesis testing perspective
+
+In hypothesis testing, we typically fix the type I error tolerance at some level $\alpha$. Among the class of tests $\mathcal{C}$ of size at most $\alpha$
+$$
+\mathcal{C} \doteq \{h \;\mid\; \mathbb{P}\{h(X)=1 \mid Y=0\} \le \alpha\}
+$$
+we seek the test with the most power
+$$
+h^* \doteq \underset{h\in \mathcal{C}}{\text{argmax}}\; \mathbb{P}\{h(X) = 1 \mid Y = 1\}\;.
+$$
+Note that in this framework, we are not concerned with prevalence of the disease as we do not take into account the distribution of $Y$; we focus on intrinsic properties of the test itself.  Let's now consider tests of a special form, called __likelihood-ratio tests__
+$$
+h_t(x) = \begin{cases}
+0\;, & \text{if}\quad \frac{p(x\mid y= 0)}{p(x \mid y= 1)} > t \\[5px]
+1\;, & \text{if}\quad \frac{p(x\mid y=0)}{p(x\mid y=1)} \le t\;
+\end{cases}
+$$
+where $\lambda(x) = \frac{p(x\mid y=0)}{p(x \mid y=1)}$ is called the likelihood-ratio, and $t>0$ is any threshold. The Neyman-Pearson Lemma gives an optimality result for likelihood-ratio tests:
+
+--- 
+
+__Theorem (Neyman-Pearson Lemma):__ Fix a tolerance level $\alpha$. Let $h_t$ be the likelihood-ratio test with size $\alpha$:
+$$
+ \mathbb{P}\{h_t(X)=1 \mid Y=0\} = \alpha
+$$
+assuming such a $t$ exists. Then $h_t$ is the most powerful test in $\mathcal{C}$, i.e. $h^* = h_t$. 
+
+---
+
+_Proof:_  We know that for any $h\in \mathcal{C}$
+$$
+\alpha = \mathbb{P}\{h_t(X) = 1 \mid Y=0\} \ge \mathbb{P}\{h(X) = 1 \mid Y=0\}\;.
+$$ 
+To complete the proof, it suffices to show that  
+$$
+\mathbb{P}\{h_t(X) = 1 \mid Y=1\} - \mathbb{P}\{h(X) = 1 \mid Y=1\} \ge \eta\;( \mathbb{P}\{h_t(X) = 1 \mid Y=0\} - \mathbb{P}\{h(X) = 1 \mid Y=0\})
+$$ 
+for some positive multiple $\eta$, since then the right hand side will be nonnegative and the left hand side is the difference in power between $h_t$ and $h$. As a starting point, we make the following assertion:
+$$
+\int (h(x) - h_t(x))(p(x \mid y=0) - t\cdot p(x\mid y=1))\,dx \;\ge\; 0\;.
+$$
+This holds because $h_t(x) = 1$ if and only if $\frac{p(x\mid y=0)}{p(x\mid y=1)} \le t$ or equivalently $p(x\mid y=0) - t\cdot p(x\mid y=1) \le 0$. We note that if $p(x\mid y=0) - t\cdot p(x\mid y=1) > 0$ then $h_t(x) = 0$ and therefore $h(x) - h_t(x) >= 0$ as well. This verifies the inequality above. Rearranging terms gives
+$$
+\begin{align*}
+t \left( \int h_t(x)p(x\mid y=1)\,dx - \int h(x) p(x\mid y=1)\,dx\right) \ge \int h_t(x)p(x\mid y=0)\,dx - \int h(x) p(x\mid y=0)\,dx
+\end{align*}
+$$
+which can be rewritten as 
+$$
+\mathbb{P}\{h_t(X) = 1 \mid Y=1\} - \mathbb{P}\{h(X) = 1 \mid Y=1\} \ge \frac{1}{t}\;( \mathbb{P}\{h_t(X) = 1 \mid Y=0\} - \mathbb{P}\{h(X) = 1 \mid Y=0\})
+$$
+as needed. 
+
+---
+
+As a side note, we observe that the Bayes optimal classifier from the previous section takes the form of a likelihood-ratio test for threshold $t = \frac{p(y=1)}{p(y=0)}$.
+
+
+
+
+
+
+
