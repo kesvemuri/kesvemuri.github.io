@@ -1,6 +1,6 @@
 # kesvemuri.github.io
 
-These are some short vignettes that I wrote on various topics in statistics:
+These are some short vignettes that I've written on various topics in statistics:
 
 [Analysis of Variance](https://kesvemuri.github.io/2019-02-15-analysis-of-variance.html)
 
