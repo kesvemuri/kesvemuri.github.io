@@ -1,0 +1,131 @@
+---
+title: Hypothesis test for the mean
+author: ''
+date: '2019-03-04'
+slug: hypothesis-test-for-the-mean
+categories: ['Basics']
+tags: []
+subtitle: ''
+---
+
+In this post, we will investigate a topic that is often presented in introductory statistics courses. Consider the following setting: we obtain independent, identically-distributed samples
+$$
+Y_1, Y_2, \ldots, Y_n \;\; \overset{\text{iid}}{\sim} \;\; P
+$$
+and our goal is to estimate the population mean $\mu \doteq \text{E}_{_{Y\sim P}}[Y]$. For the moment, let's assume that the population variance, $\sigma^2 \doteq \text{Var}_{_{Y\sim P}}[Y] = \text{E}_{_{Y\sim P}}[(Y - \mu)^2] > 0$ exists and is known. An obvious choice for a _point estimate_ of the mean would be the sample average $\bar{Y} = \frac{1}{n} \sum_{i=1}^n Y_i$, but we would like to be able to say something about the uncertainty, or variability, in this estimate. Luckily, the __central limit theorem__ gives us the convergence in distribution result:
+$$
+\frac{\bar{Y} - \mu}{\sigma/\sqrt{n}} \;\;\rightsquigarrow \;\; \mathcal{N}(0, 1)
+$$
+and for a large enough sample size $n$, we can rearrange above and make the approximation $\bar{Y} \sim \mathcal{N} \big(\mu, \frac{\sigma^2}{n} \big)$. Intuitively, the sample mean will fall around the true mean $\mu$, and as the sample size grows, the variability in the sample mean will drop. 
+
+Since in most real-world situations we wouldn't know the population variance $\sigma^2$, we could estimate it from the sample using $S^2 = \frac{1}{n-1}\sum_{i=1}^n (Y_i - \bar{Y})^2$. If $\text{Var}_{_{Y\sim P}}(S^2) \rightarrow 0$ as $n\rightarrow \infty$, then using Chebyshev's inequality we can show that $S^2 \overset{p}{\rightarrow} \sigma^2$ in probability and an application of Slutsky's theorem yields the desired
+$$
+\frac{\bar{Y} - \mu}{S/\sqrt{n}} = \frac{\sigma}{S}\cdot \frac{\bar{Y} - \mu}{\sigma/\sqrt{n}} \;\; \rightsquigarrow \;\; \mathcal{N}(0, 1)\,\,.
+$$
+So for large $n$ we can use the approximation $\bar{Y} \sim \mathcal{N} \big(\mu, \frac{S^2}{n} \big)$. In the case of small sample sizes, it is often inappropriate to apply these asymptotic approximations, so in a later post we will discuss exact calculations that can be done under further assumptions on $P$ using the $t$-distribution. 
+
+
+### Hypothesis Testing
+
+A typical null and alternative hypothesis pair might be 
+$$
+\mathcal{H}_0 : \mu = \mu_0 \quad, \quad \mathcal{H}_A : \mu \ne \mu_0\,\,.
+$$
+Under the null hypothesis, we have that $\bar{Y} \sim \mathcal{N}\big(\mu_0, \frac{\sigma^2}{n} \big)$. It would make sense to reject the null if 
+
+$$
+| \bar{Y} - \mu_0| \ge c \tag{*}
+$$
+i.e. the sample mean falls far away from the hypothesized true mean, which would be unlikely to happen if the null hypothesis were true. We usually pick $c > 0$ in such a way that the probability of a Type 1 error (rejecting the null when the null is true) is less than some $\alpha$. 
+
+$$
+\begin{alignat*}{2}
+&\text{Pr}_{_{\mathcal{H}_0}}\Big[ | \bar{Y} - \mu_0| \ge c\Big] = \alpha \\[7px]
+\iff \quad
+&\text{Pr}_{_{\mathcal{H}_0}}\left[ \frac{|\bar{Y} - \mu_0|}{\sigma/\sqrt{n}} \ge \frac{c}{\sigma/\sqrt{n}} \right] = \alpha \\[7px]
+\iff \quad
+&\text{Pr}_{_{\mathcal{H}_0}}\left[ \left\{\frac{\bar{Y} - \mu_0}{\sigma/\sqrt{n}} \ge \frac{c}{\sigma/\sqrt{n}} \right\} \; \cup \; \left\{\frac{\bar{Y} - \mu_0}{\sigma/\sqrt{n}} \le \frac{-c}{\sigma/\sqrt{n}} \right\} \right] = \alpha \\[7px]
+\iff \quad
+&\text{Pr}_{_{Z\sim \mathcal{N}(0,1)}}\left[ \left\{Z \ge \frac{c}{\sigma/\sqrt{n}} \right\} \; \cup \; \left\{Z \le \frac{-c}{\sigma/\sqrt{n}} \right\} \right] = \alpha \\[7px]
+\iff \quad
+& \text{Pr}_{_{Z\sim \mathcal{N}(0,1)}}\left[ Z \ge \frac{c}{\sigma/\sqrt{n}} \right] = \frac{\alpha}{2} \\[7px]
+\end{alignat*}
+$$
+so if $z^*_{\alpha/2}$ denotes the cutoff point for the standard normal distribution, which for $\alpha = .05$ will be
+```{r}
+alpha = .05
+qnorm(p = .05/2, mean = 0, sd = 1, lower.tail = FALSE)
+```
+we see that we should set $c = z^*_{\alpha/2} \cdot \frac{\sigma}{\sqrt{n}}$. The rejection region $(^*)$ is depicted in the interactive graphic below. 
+
+<iframe src="https://www.desmos.com/calculator/6yhz4cwerj?embed" width="500px" height="500px" style="border: 1px solid #ccc" frameborder=0></iframe>
+
+Geometrically, it is easy to see that we can rephrase the rejection criterion in terms of the p-value computed from our data $p(\bar{Y})$ as follows:
+$$
+\begin{align*}
+&|\bar{Y} - \mu_0| \ge z^*_{\alpha/2} \cdot \frac{\sigma}{\sqrt{n}}  \tag{**}\\[7px]
+\iff \quad
+&\frac{|\bar{Y} - \mu_0|}{\sigma/\sqrt{n}} \ge z^*_{\alpha/2} \\[7px]
+\iff \quad 
+& p(\bar{Y}) \doteq \text{Pr}_{_{Z \sim \mathcal{N}(0,1)}} \left[ |Z| \ge \frac{|\bar{Y} - \mu_0|}{\sigma/\sqrt{n}}\right] \le \alpha\,\,.
+\end{align*}
+$$
+Confidence intervals are another popular, and perhaps more intuitive, way of thinking about the process of testing a null hypothesis. Notice that 
+$$
+|\bar{Y} - \mu_0| < z^*_{\alpha/2} \cdot \frac{\sigma}{\sqrt{n}} \quad \iff \quad 
+\mu_0 \in \left[\bar{Y} - z^*_{\alpha/2} \cdot \frac{\sigma}{\sqrt{n}} \;\;,\;\; \bar{Y} + z^*_{\alpha/2} \cdot \frac{\sigma}{\sqrt{n}} \right]
+$$
+Since the event $(^{**})$ occurs with proability $\alpha$, the event above occurs with probability $1-\alpha$. In summary:
+
+> We reject the null hypothesis at level $\alpha$ if $\bar{Y}$ falls in the rejection region $(^{**})$, or equivalently, if the p-value $p(\bar{Y}) \le \alpha$, or equivalently, if $\mu_0$ is not contained in the $1-\alpha$ confidence interval
+
+This correspondence is illustrated in the previous graphic, where the confidence interval is drawn in red. Note that one advantage of the p-value approach is that the computation of a p-value doesn't require specification of the significance level $\alpha$. 
+
+
+### Power Analysis
+
+If, as the experimenter, we have the freedom to set the sample size $n$, how should we go about it? To address this question, it is useful to define the __power function__:
+$$
+\begin{align*}
+\beta(\mu) &\doteq \text{Pr}_{_{\mu}} \Big[ \text{test rejects the null} \Big] \\[7px]
+&= \text{Pr}_{_{\mu}}\left[ |\bar{Y} - \mu_0| \ge z^*_{\alpha/2} \cdot \frac{\sigma}{\sqrt{n}}\right]
+\end{align*}
+$$
+Under the null hypothesis (i.e. when the null is true), $\mu = \mu_0$ and the above probability is precisely $\alpha$, the probability of a Type 1 Error. When $\mu \ne \mu_0$ it is the test's <u> power, or the probability of rejecting the null when the null is false </u>. The power is equal to 1 minus the <u> Type 2 Error, the probability of accepting the null when the null is false </u>. 
+
+Using the fact that $\bar{Y} \sim \mathcal{N}\big(\mu, \frac{\sigma^2}{n} \big)$, we can rewrite the expression above as follows:
+$$
+\begin{align*}
+\beta(\mu) &= \text{Pr}_{_{\mu}}\left[ |\bar{Y} - \mu_0| \ge z^*_{\alpha/2} \cdot \frac{\sigma}{\sqrt{n}}\right] \\[7px]
+&= \text{Pr}_{_{\mu}}\left[ \left\{\bar{Y} - \mu_0 \ge z^*_{\alpha/2} \cdot \frac{\sigma}{\sqrt{n}}\right \} \; \cup \; \left\{\bar{Y} - \mu_0 \le -z^*_{\alpha/2} \cdot \frac{\sigma}{\sqrt{n}}\right \} \right]  \tag{***}\\[7px]
+&= \text{Pr}_{_{\mu}}\left[ \left\{\frac{\bar{Y} - \mu}{\sigma/\sqrt{n}} \ge z^*_{\alpha/2} + \frac{\mu_0 - \mu}{\sigma/\sqrt{n}}\right \} \; \cup \; \left\{\frac{\bar{Y} - \mu}{\sigma/\sqrt{n}} \le -z^*_{\alpha/2} + \frac{\mu_0 - \mu}{\sigma/\sqrt{n}}\right \} \right]  \\[7px]
+&= \text{Pr}_{_{Z\sim \mathcal{N}(0, 1)}}\left[ \left\{Z\ge z^*_{\alpha/2} + \frac{\mu_0 - \mu}{\sigma/\sqrt{n}}\right \} \; \cup \; \left\{Z \le -z^*_{\alpha/2} + \frac{\mu_0 - \mu}{\sigma/\sqrt{n}}\right \} \right]  \,\,.\\[7px]
+&= \text{Pr}_{_{Z\sim \mathcal{N}(0, 1)}}\left[ Z\ge z^*_{\alpha/2} + \frac{\mu_0 - \mu}{\sigma/\sqrt{n}} \right]\; +\; \text{Pr}_{_{Z\sim \mathcal{N}(0, 1)}} \left[ Z \le -z^*_{\alpha/2} + \frac{\mu_0 - \mu}{\sigma/\sqrt{n}} \right] \\[7px]
+\end{align*}
+$$
+In this form, it is clear that, as we noted above, $\beta(\mu_0) = \alpha$. While the last line makes the dependence on $\mu$ explicit, we prefer $(^{***})$ for visualization purposes. Below is an interactive plot demonstrating the behaviour of $\beta(\mu)$ with $\alpha = .05$ and a default setting of $n=1$. We are essentially calculating the probability of the test's rejection region under a family of distributions on $\bar{Y}$ parametrized by $\mu$. 
+
+<iframe src="https://www.desmos.com/calculator/bmufucglug?embed" width="500px" height="500px" style="border: 1px solid #ccc" frameborder=0></iframe>
+
+We may want to choose $n$ so that if $|\mu - \mu_0| \ge \epsilon$ then $\beta(\mu) \ge 1-\delta$, i.e. if the true $\mu$ is far enough away from the null hypothesis value $\mu_0$, then we will reject the null with some nontrivial probability. In the plot above, this corresponds to holding $\mu$ a fixed distance away from $\mu_0$ and raising the $n$-slider until the desired power is achieved. The power function above is quite complicated, so we would probably need to solve for $n$ numerically. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

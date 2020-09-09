@@ -1,0 +1,123 @@
+---
+title: "Binary classification"
+author: ''
+date: '2019-07-11'
+slug: binary-classification
+subtitle: ''
+tags: []
+categories: 
+  - Machine Learning
+---
+
+
+
+<p>The setup is as follows. We have a feature space <span class="math inline">\(\mathcal{X} = \mathbb{R}^d\)</span> and a label space <span class="math inline">\(\mathcal{Y} = \{0, 1\}\)</span> and there is a joint distribution <span class="math inline">\(P\)</span> over <span class="math inline">\(\mathcal{X} \times \mathcal{Y}\)</span>. For example, we can think of the feature vector as the medical history of a patient and the label as indicating whether or not the patient has a particular disease. Here, we will assume the distribution <span class="math inline">\(P\)</span> is specified and look at ways in which we might evaluate the quality of a binary classifier <span class="math inline">\(h:\mathcal{X} \rightarrow \mathcal{Y}\)</span>. If we imagine running the classifier on many examples (drawn iid from <span class="math inline">\(P\)</span>), we could record the outcomes in a contingency table:</p>
+<table>
+<tbody>
+<tr class="odd">
+<td align="center"></td>
+<td align="center"><em>condition positive</em> <span class="math inline">\((y = 1)\)</span></td>
+<td align="center"><em>condition negative</em> <span class="math inline">\((y=0)\)</span></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="center"><em>predicted positive</em> <span class="math inline">\((h(x)=1)\)</span></td>
+<td align="center">true positives</td>
+<td align="center">false positives</td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="center"><em>predicted negative</em> <span class="math inline">\((h(x)=0)\)</span></td>
+<td align="center">false negatives</td>
+<td align="center">true negatives</td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
+<p>Some useful probabilities derived from the table are listed below:</p>
+<ul>
+<li><strong>size / false alarm rate / probability of type I error</strong></li>
+</ul>
+<p><span class="math display">\[
+\mathbb{P} \{h(X) = 1 \mid Y=0 \}
+\]</span></p>
+<ul>
+<li><strong>probability of type II error</strong></li>
+</ul>
+<p><span class="math display">\[
+\mathbb{P} \{h(X) = 0 \mid Y=1 \}
+\]</span></p>
+<ul>
+<li><strong>sensitivity / power / detection rate</strong></li>
+</ul>
+<p><span class="math display">\[
+\mathbb{P} \{h(X) = 1 \mid Y=1 \}
+\]</span></p>
+<ul>
+<li><strong>specificity</strong></li>
+</ul>
+<p><span class="math display">\[
+\mathbb{P} \{h(X) = 0 \mid Y=0 \}
+\]</span></p>
+<p>The above quantities are prevalence-independent measures in that they are intrinsic to the test <span class="math inline">\(h\)</span> and do not depend on the prevalence of the disease in the population. Ideally, we would like a classifier that has high sensitivity and high specificity, or equivalently, low probability of type I and type II errors. It is trivial to produce a classifier that makes no type I errors, as we can simply set <span class="math inline">\(h \equiv 0\)</span>; but then of course we have no sensitivity. Similarly, to produce a classifier that makes no type II errors, as we can set <span class="math inline">\(h \equiv 1\)</span>; again this is not interesting since then there is no specificity. There are multiples ways in which one may attempt to combine the two criterion into a single objective.</p>
+<div id="learning-theory-perspective" class="section level3">
+<h3>Learning theory perspective</h3>
+<p>Learning theory focuses on the following notion of <strong>generalization error / risk</strong>: <span class="math display">\[
+\begin{align*}
+L(h) &amp;= \underset{(X,Y) \sim P}{\mathbf{E}}\;\big[\ell_{01}(h, (X,Y))\big] \\[5px]
+&amp;= \underset{(X,Y) \sim P}{\mathbf{E}}\; \big[\mathbb{1}_{\{h(X) \ne Y\}}\big] \\[5px]
+&amp;= \mathbb{P}\{h(X) \ne Y\} \\[5px]
+&amp;= \underbrace{\mathbb{P}\{h(X)=1 \mid Y=0\}}_{\text{probability of type I error}}\mathbb{P}\{Y=0\} + \underbrace{\mathbb{P}\{h(X)=0 \mid Y=1\}}_{\text{probability of type II error}}\mathbb{P}\{Y=1\}\;.
+\end{align*}
+\]</span> This objective weights the two types of error by prevalence of the disease in the population. If we knew the underlying distribution <span class="math inline">\(P\)</span>, then it’s straightforward to identify the best classifier with respect to the risk defined above. It’s called the <strong>Bayes optimal classifier</strong> and can be derived as follows: <span class="math display">\[
+\begin{align*}
+L(h) &amp;= \underset{(X,Y) \sim P}{\mathbf{E}}\; \big[\mathbb{1}_{\{h(X) \ne Y\}}\big] \\[5px]
+&amp;= \underset{X \sim P_X}{\mathbf{E}}\;\underset{Y \sim P_{Y\mid X}}{\mathbf{E}}\; \big[\mathbb{1}_{\{h(X) \ne Y\}} \mid X\big] \\[5px]
+&amp;= \int \left[\sum_{y=0}^1 \mathbb{1}_{\{h(x) \ne y\}}\;p(y\mid x)\right]p(x)\;dx
+\end{align*}
+\]</span> and it’s clear that the best choice is to set <span class="math display">\[
+h^*(x) = \underset{y\in \mathcal{Y}}{\text{argmax}}\; p(y \mid x)
+\]</span> and for this selection, we have <span class="math inline">\(L(h^*) \le L(h)\)</span> for all binary classifiers <span class="math inline">\(h\)</span>.</p>
+</div>
+<div id="hypothesis-testing-perspective" class="section level3">
+<h3>Hypothesis testing perspective</h3>
+<p>In hypothesis testing, we typically fix the type I error tolerance at some level <span class="math inline">\(\alpha\)</span>. Among the class of tests <span class="math inline">\(\mathcal{C}\)</span> of size at most <span class="math inline">\(\alpha\)</span> <span class="math display">\[
+\mathcal{C} \doteq \{h \;\mid\; \mathbb{P}\{h(X)=1 \mid Y=0\} \le \alpha\}
+\]</span> we seek the test with the most power <span class="math display">\[
+h^* \doteq \underset{h\in \mathcal{C}}{\text{argmax}}\; \mathbb{P}\{h(X) = 1 \mid Y = 1\}\;.
+\]</span> Note that in this framework, we are not concerned with prevalence of the disease as we do not take into account the distribution of <span class="math inline">\(Y\)</span>; we focus on intrinsic properties of the test itself. Let’s now consider tests of a special form, called <strong>likelihood-ratio tests</strong> <span class="math display">\[
+h_t(x) = \begin{cases}
+0\;, &amp; \text{if}\quad \frac{p(x\mid y= 0)}{p(x \mid y= 1)} &gt; t \\[5px]
+1\;, &amp; \text{if}\quad \frac{p(x\mid y=0)}{p(x\mid y=1)} \le t\;
+\end{cases}
+\]</span> where <span class="math inline">\(\lambda(x) = \frac{p(x\mid y=0)}{p(x \mid y=1)}\)</span> is called the likelihood-ratio, and <span class="math inline">\(t&gt;0\)</span> is any threshold. The Neyman-Pearson Lemma gives an optimality result for likelihood-ratio tests:</p>
+<hr />
+<p><strong>Theorem (Neyman-Pearson Lemma):</strong> Fix a tolerance level <span class="math inline">\(\alpha\)</span>. Let <span class="math inline">\(h_t\)</span> be the likelihood-ratio test with size <span class="math inline">\(\alpha\)</span>: <span class="math display">\[
+ \mathbb{P}\{h_t(X)=1 \mid Y=0\} = \alpha
+\]</span> assuming such a <span class="math inline">\(t\)</span> exists. Then <span class="math inline">\(h_t\)</span> is the most powerful test in <span class="math inline">\(\mathcal{C}\)</span>, i.e. <span class="math inline">\(h^* = h_t\)</span>.</p>
+<hr />
+<blockquote>
+<p><em>Proof:</em> We know that for any <span class="math inline">\(h\in \mathcal{C}\)</span> <span class="math display">\[
+\alpha = \mathbb{P}\{h_t(X) = 1 \mid Y=0\} \ge \mathbb{P}\{h(X) = 1 \mid Y=0\}\;.
+\]</span> To complete the proof, it suffices to show that<br />
+<span class="math display">\[
+\mathbb{P}\{h_t(X) = 1 \mid Y=1\} - \mathbb{P}\{h(X) = 1 \mid Y=1\} \ge \eta\;( \mathbb{P}\{h_t(X) = 1 \mid Y=0\} - \mathbb{P}\{h(X) = 1 \mid Y=0\})
+\]</span> for some positive multiple <span class="math inline">\(\eta\)</span>, since then the right hand side will be nonnegative and the left hand side is the difference in power between <span class="math inline">\(h_t\)</span> and <span class="math inline">\(h\)</span>. As a starting point, we make the following assertion: <span class="math display">\[
+\int (h(x) - h_t(x))(p(x \mid y=0) - t\cdot p(x\mid y=1))\,dx \;\ge\; 0\;.
+\]</span> This holds because <span class="math inline">\(h_t(x) = 1\)</span> if and only if <span class="math inline">\(\frac{p(x\mid y=0)}{p(x\mid y=1)} \le t\)</span> or equivalently <span class="math inline">\(p(x\mid y=0) - t\cdot p(x\mid y=1) \le 0\)</span>. We note that if <span class="math inline">\(p(x\mid y=0) - t\cdot p(x\mid y=1) &gt; 0\)</span> then <span class="math inline">\(h_t(x) = 0\)</span> and therefore <span class="math inline">\(h(x) - h_t(x) &gt;= 0\)</span> as well. This verifies the inequality above. Rearranging terms gives <span class="math display">\[
+\begin{align*}
+t \left( \int h_t(x)p(x\mid y=1)\,dx - \int h(x) p(x\mid y=1)\,dx\right) \ge \int h_t(x)p(x\mid y=0)\,dx - \int h(x) p(x\mid y=0)\,dx
+\end{align*}
+\]</span> which can be rewritten as <span class="math display">\[
+\mathbb{P}\{h_t(X) = 1 \mid Y=1\} - \mathbb{P}\{h(X) = 1 \mid Y=1\} \ge \frac{1}{t}\;( \mathbb{P}\{h_t(X) = 1 \mid Y=0\} - \mathbb{P}\{h(X) = 1 \mid Y=0\})
+\]</span> as needed.</p>
+</blockquote>
+<hr />
+<p>As a side note, we observe that the Bayes optimal classifier from the previous section takes the form of a likelihood-ratio test for threshold <span class="math inline">\(t = \frac{p(y=1)}{p(y=0)}\)</span>.</p>
+</div>

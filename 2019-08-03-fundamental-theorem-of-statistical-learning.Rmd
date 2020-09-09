@@ -1,0 +1,281 @@
+---
+title: "VC theory"
+author: ''
+date: '2019-08-03'
+output: pdf_document
+slug: VC theory
+categories: Machine Learning
+---
+
+>
+Note: most of the material in this post follows the presentation in _Understanding Machine Learning: From Theory to Algorithms_ by Shalev-Shwartz and Ben-David
+
+
+As usual, we start with a training set of labeled examples $S$
+$$
+(X_1, Y_1)\;, \;\ldots\;,\; (X_n, Y_n) \overset{\text{iid}}{\sim} P
+$$
+from some joint distribution over $\mathcal{X}\times \mathcal{Y}$, and our goal is to output a predictive function  $h: \mathcal{X} \rightarrow \mathcal{Y}$ that has low _generalization error_ or _risk_
+$$
+L_P(h) = \underset{{(X,Y)\sim P}}{\mathbf{E}}\left[ \ell(h, (X,Y))\right]\;.
+$$
+For binary classification problems with $\mathcal{Y} = \{0, 1\}$, we often employ the 0-1 loss $\ell_{01}(h, (x,y)) = \mathbf{1}(h(x)\ne y)$ which yields the risk $L_P(h) = \mathbb{P}\left\{ h(X) \ne Y \right\}$. This is statistically intuitive, but for computational reasons (which we don't consider in this post), it might make sense to think about different losses. 
+
+Since we don't know $P$, we can't compute the risk. We can approximate it with the _empirical risk_, defined as 
+$$
+L_S(h) = \frac{1}{n}\sum_{i=1}^n \ell(h, (X_i, Y_i))
+$$
+which in the binary classification 0-1 loss case, equals $L_S(h) = \frac{1}{n} \sum_{i=1}^n \mathbf{1}(h(X_i) \ne Y_i)$ and records the fraction of mistakes that $h$ makes on the training set. If we limit our consideration to some hypothesis class of functions $\mathcal{H}$ that represents our prior knowledge, and we let $h^*$ denote the minimizer of the risk $L_P(h)$ over $\mathcal{H}$, the following definition encapsulates a natural notion of learnability. 
+
+---
+
+__Definition 1:__ A hypothesis class $\mathcal{H}$ is _agnostic (proper) PAC learnable_ if there exists a learning algorithm $\hat{h}:(\mathcal{X}\times\mathcal{Y})^n \rightarrow \mathcal{H}$ that satisfies the following property for every $\epsilon, \delta \in (0,1)$ and every source distribution $P$, once presented with enough samples $n \ge n(\mathcal{H}, \epsilon, \delta)$: with probability at least $1 - \delta$ over training sets of size $n$ drawn iid $S\sim P^n$
+$$
+L_P(\hat{h}(S)) \le L_P(h^*) + \epsilon\;.
+$$
+
+---
+
+In effect, all this is saying is that it is desirable to have consistency in the sense that $L_P(\hat{h}(S)) \rightarrow L_P(h^*)$ in probability. Since $h^*$ minimizes the risk, it makes sense to take $\hat{h}$ to minimize the empirical risk. This turns out to be the only learning rule of statistical relevance, and it is called the _ERM learning rule_:
+$$
+\hat{h}(S) = \arg\min_{h\in \mathcal{H}}\; L_S(h)\;.
+$$
+So for large enough sample size $n$, we want $L_S(\hat{h}(S)) \approx L_P(h^*)$. For any fixed classifier $h \in \mathcal{H}$, this is simply a consequence of LLN, but since $\hat{h}(S)$ is random and depends on the training data, we need a stronger result than LLN. The cartoon graphic below (recreated from the _Generalization I_ lecture given at Simons Institute) illustrates the situtation. 
+
+![](/images/empirical_process_1.jpg)
+
+
+Broadly speaking, we want $\mathcal{H}$ to be large enough to "get close" to capturing the best function $h^* \approx \tilde{h}$ (i.e. low _bias_), but we also want $\mathcal{H}$ to be small enough so that our $\hat{h}(S)$ obtained from the sample "curve" $L_S(h)$ is a good approximation $\hat{h}(S) \approx h^*$ (i.e. low _variance_). Clearly the second criterion will be satisfied if the sampled curve $L_S(h)$ is uniformly close to $L_P(h)$ for all $h\in \mathcal{H}$ with high probability. This leads us to another definition. 
+
+---
+
+__Definition 2:__ A hypothesis class $\mathcal{H}$ has the _uniform convergence property_ (and is called a _Glivenko-Cantelli class_) if it satisfies the following property for every $\epsilon, \delta \in (0,1)$ and every source distribution $P$, once given enough training samples $n\ge n^{\text{uc}}(\mathcal{H}, \epsilon, \delta)$: with probability at least $1 - \delta$ over training sets of size $n$ drawn iid $S\sim P^n$
+$$
+\forall h\in \mathcal{H},  \quad |L_S(h) - L_P(h)| \le \epsilon\;.
+$$
+
+---
+
+It's not hard to show that if $\mathcal{H}$ has the uniform convergence property with sample complexity $n^{\text{uc}}(\mathcal{H}, \epsilon, \delta)$, then $\mathcal{H}$ is agnostic PAC learnable (via the ERM learning rule) with sample complexity $n(\mathcal{H}, \epsilon, \delta) \le n^{\text{uc}}(\mathcal{H}, \epsilon/2, \delta)$. This can be seen as follows: take a fixed sample $S\in (\mathcal{X}\times\mathcal{Y})^n$ that falls in the "uniform convergence" event above for parameter values $\epsilon/2, \delta$. For such an $S$, we have that for all $h\in \mathcal{H}$
+$$
+\begin{align*}
+L_P(\hat{h}(S)) \le L_S(\hat{h}(S)) + \frac{\epsilon}{2} \le L_S(h) + \frac{\epsilon}{2} \le L_P(h) + \frac{\epsilon}{2} + \frac{\epsilon}{2} = L_P(h) + \epsilon
+\end{align*}
+$$
+where the first and third inequalities rely on the fact that $S$ is in the uniform convergence event. Therefore, the above statement holds with probability at least $1 - \delta$, and since $h$ is arbitrary, we can take the infimum on the rhs over $\mathcal{H}$ to recover the agnostic PAC learnability requirement. 
+
+<u>So possession of the uniform convergence property is sufficient for $\mathcal{H}$ to be agnostic PAC learnable.</u> We will now describe a sufficient condition for $\mathcal{H}$ to have the uniform convergence property in the binary classification case. First we note that the uniform convergence property can be expressed as follows: for every $\epsilon, \delta \in (0,1)$ and every source distribution $P$, once given enough training samples $n\ge n^{\text{uc}}(\mathcal{H}, \epsilon, \delta)$
+$$
+\underset{S\sim P^n}{\mathbb{P}} \left\{ \sup_{h\in \mathcal{H}} |L_S(h) - L_P(h)| > \epsilon\right\} < \delta
+$$
+so it is logical to pursue bounds of the form
+$$
+\underset{S\sim P^n}{\mathbb{P}} \left\{ \sup_{h\in \mathcal{H}} |L_S(h) - L_P(h)| > \epsilon\right\} < \underbrace{ \binom{\text{function class}}{\text{complexity of } \mathcal{H}} \cdot \binom{\text{concentration bound}}{\text{for any fixed } h}}_{\text{goes to 0 as } n\rightarrow \infty \text{ with fixed }\epsilon} \tag{*}
+$$
+since then we can set the rhs equal to $\delta$ and solve for the appropriate sample size $n$. Recall that Hoeffding's inequality can be applied for a fixed $h\in \mathcal{H}$ to obtain the concentration bound
+$$
+\underset{S\sim P^n}{\mathbb{P}}\{|L_S(h) - L_P(h)| > \epsilon\} \le 2e^{-2n\epsilon^2}
+$$
+which is exponentially decreasing in $n$; the key is that we need our notion of function class complexity of $\mathcal{H}$ to grow slowly enough with $n$ to be killed off by the concentration bound in the limit. Now we are ready to introduce more definitions. 
+
+---
+
+__Definition 3:__ The _growth function_ of a hypothesis class $\mathcal{H}$ is defined as 
+$$
+\Gamma(\mathcal{H}, n) = \sup_{\{x_1, \ldots, x_n\} \subseteq \mathcal{X}} \left| \mathcal{H}_{x_1, \ldots, x_n} \right|
+$$
+where 
+$$
+\mathcal{H}_{x_1, \ldots, x_n} = \left\{(h(x_1), \ldots, h(x_n)): h\in \mathcal{H} \right\}
+$$
+is the set of all possible _behaviors_ (or _realizations_) of functions in $\mathcal{H}$ on the set of points $\{x_1, \ldots, x_n\}$. Since a class of binary functions $\mathcal{H}$ can be identified with the collection $\{h^{-1}(1): h\in \mathcal{H}\}$, the growth function of $\mathcal{H}$ 
+$$
+\Gamma(\mathcal{H}, n) = \sup_{C\subseteq \mathcal{X},\; |C|=n} |\{h^{-1}(1)\cap C: h\in \mathcal{H}\}
+$$
+counts the number of subsets of $C=\{x_1, \ldots, x_n\}$ that get "picked out" by $\mathcal{H}$. The _VC dimension_ of a class of binary functions $\mathcal{H}$ is defined as
+$$
+\mathsf{VC}(\mathcal{H}) = \sup \{n: \Gamma(\mathcal{H}, n) = 2^n\}
+$$
+or in words, the maximum $n$ such that there exists a set $C\subseteq \mathcal{X}$ of size $n$ on which $\mathcal{H}$ picks out all possible subsets; such a set $C$ is said to be _shattered_ by $\mathcal{H}$. 
+
+---
+
+It turns out that we can prove bounds of the form $(^*)$ using the growth function $\Gamma(\mathcal{H}, n)$ as the function class complexity. What makes these bounds useful is the surprising fact that if $\mathsf{VC}(\mathcal{H}) < \infty$, the growth function grows only polynomially for $n \ge \mathsf{VC}(\mathcal{H})$. We state this famous result below without proof. 
+
+---
+
+__Theorem (Sauer's Lemma):__ If $d\doteq \mathsf{VC}(\mathcal{H}) < \infty$ then 
+$$
+\Gamma(\mathcal{H}, n) \le \sum_{i=0}^d \binom{n}{i} \le \left(\frac{en}{d}\right)^d
+$$
+where the second inequality holds for $n\ge d$. 
+
+---
+
+With this fact in hand, we now work to establish uniform bounds of the form $(^*)$. Notice that the growth function is a combinatorial measure of complexity; it characterizes $\mathcal{H}$ in terms of its action on finite sets of points. The technique of symmetrization allows us to massage the lhs of $(^*)$ into a form amenable for bounding by the growth function. 
+
+---
+
+__Lemma (Symmetrization):__ For any hypothesis class $\mathcal{H}$, source distribution $P$, $\epsilon > 0$, and sample size $n > \frac{2}{\epsilon^2}$:
+$$
+\underset{S\sim P^n}{\mathbb{P}} \left\{ \sup_{h\in \mathcal{H}} |L_S(h) - L_P(h)| > \epsilon\right\} \le 2\, 
+\underset{S,S'\sim P^n}{\mathbb{P}} \left\{ \sup_{h\in \mathcal{H}} |L_S(h) - L_{S'}(h)| > \frac{\epsilon}{2}\right\}
+$$
+where $S, S'$ are iid training sets ($S'$ is called a _ghost sample_). 
+
+---
+
+>
+_Proof._ 
+For simplicity, we will assume that 
+$$
+h_S = \arg\sup_{h\in \mathcal{H}}\; |L_S(h) - L_P(h)|
+$$
+is realized. Then we make the claim
+$$
+\mathbf{1}\left\{ |L_S(h_S) - L_P(h_S)| > \epsilon\right\} \cdot \mathbf{1}\left\{ |L_{S'}(h_S) - L_{P}(h_S)| \le \frac{\epsilon}{2}\right\} \le \mathbf{1}\left\{  |L_S(h_S) - L_{S'}(h_S)| > \frac{\epsilon}{2}\right\} \tag{*}
+$$
+which follows from a simple triangle inequality argument:
+$$
+\begin{align*}
+\epsilon &<  |L_S(h_S) - L_P(h_S)| \\[5px]
+&\le |L_S(h_S) - L_{S'}(h_S)| + |L_{S'}(h_S) - L_P(h_S)| \\[5px]
+&\le  |L_S(h_S) - L_{S'}(h_S)| + \frac{\epsilon}{2}\;.
+\end{align*}
+$$
+Now we note that
+$$
+\begin{align*}
+\underset{S'\sim P^n}{\mathbb{P}}\left\{ |L_{S'}(h_S) - L_{P}(h_S)| > \frac{\epsilon}{2}\right\}
+&\le \frac{4}{\epsilon^2}\cdot \text{Var}\left[ L_{S'}(h_S)\right] \\[5px]
+&= \frac{4}{n\epsilon^2}\cdot \text{Var}\big[\mathbf{1}\{h_S(X)\ne Y\}\big] \\[5px] 
+&\le \frac{1}{n\epsilon^2}
+\end{align*}
+$$
+where we used the fact that the maximum variance of a random variable taking values in $[0,1]$ is $\frac{1}{4}$ (realized by a fair coin flip), which implies that for $n > \frac{2}{\epsilon^2}$ 
+$$
+\underset{S'\sim P^n}{\mathbb{P}}\left\{ |L_{S'}(h_S) - L_{P}(h_S)| \le \frac{\epsilon}{2}\right\} > \frac{1}{2}\;.
+$$
+So taking expectations on both sides of $(^*)$ over $S'$ for $n > \frac{2}{\epsilon^2}$ gives
+$$
+\mathbf{1}\left\{ |L_S(h_S) - L_P(h_S)| > \epsilon\right\} \le 2 \cdot \underset{S'\sim P^n}{\mathbb{P}}\left\{ |L_S(h_S) - L_{S'}(h_S)| > \frac{\epsilon}{2}\right\}
+$$
+which implies that 
+$$
+\mathbf{1}\left\{ \sup_{h\in \mathcal{H}} |L_S(h) - L_P(h)| > \epsilon\right\} \le 2 \cdot \underset{S'\sim P^n}{\mathbb{P}}\left\{ \sup_{h\in \mathcal{H}} |L_S(h) - L_{S'}(h)| > \frac{\epsilon}{2}\right\}
+$$
+and finally taking expectation over $S$ above gives the desired result. 
+
+---
+
+Symmetrization allows us to restrict our consideration to the behavior of each $h$ on the finite samples $S, S'$. The above lemma implies that
+$$
+\begin{align*}
+\underset{S\sim P^n}{\mathbb{P}} \left\{ \sup_{h\in \mathcal{H}} |L_S(h) - L_P(h)| > \epsilon\right\} &\le 2\cdot \underset{S,S'\sim P^n}{\mathbb{P}} \left\{ \sup_{h\in \mathcal{H}} |L_S(h) - L_{S'}(h)| > \frac{\epsilon}{2}\right\} \\[5px]
+&= 2\cdot \underset{S,S'\sim P^n}{\mathbb{P}} \left\{ \max_{v\in \mathcal{H}_C} \frac{1}{n}\left|\sum_{i=1}^n \mathbf{1}\{v(X_i)\ne Y_i\} - \mathbf{1}\{v(X_i')\ne Y_i'\}\right| > \frac{\epsilon}{2}\right\}\\[5px]
+\end{align*}
+$$
+where $C = \{ X_1, \ldots, X_n, X_1', \ldots, X_n'\}$ is a set of $2n$ examples from $\mathcal{X}$. We would like to union bound over $\mathcal{H}_C$ and bound the argument using Hoeffding's inequality, but the problem is that $\mathcal{H}_C$ is a random collection and can't be pulled out of the probability expression directly. If we condition on $S, S'$, $\mathcal{H}_C$ is a fixed collection and we can use the union bound, but then there is no more randomness left to apply Hoeffding's inequality. So somewhat unintuitively, the trick is to introduce _more randomness_ in a clever way. First, we observe that if $Z, Z'$ are iid random variables and $\sigma\sim \text{unif}\{\pm 1\}$ is an independent (fair) coin flip, then 
+$$
+Z - Z' \overset{d}{=} \sigma(Z-Z')
+$$
+since 
+$$
+\mathbb{P}\{ \sigma(Z - Z') \le t\} = \frac{1}{2}\cdot \mathbb{P}\{Z - Z' \le t\} + \frac{1}{2}\cdot \mathbb{P} \{Z' - Z \le t\} = \mathbb{P}\{Z - Z'\le t\}\;.
+$$
+It then follows that 
+$$
+\max_{v\in \mathcal{H}_C} \frac{1}{n}\left|\sum_{i=1}^n \mathbf{1}\{v(X_i)\ne Y_i\} - \mathbf{1}\{v(X_i')\ne Y_i'\}\right| \overset{d}{=} \max_{v\in \mathcal{H}_C} \frac{1}{n}\left|\sum_{i=1}^n \sigma_i(\mathbf{1}\{v(X_i)\ne Y_i\} - \mathbf{1}\{v(X_i')\ne Y_i'\})\right|
+$$
+so continuing our calculation from before, 
+$$
+\begin{align*}
+\underset{S\sim P^n}{\mathbb{P}} \left\{ \sup_{h\in \mathcal{H}} |L_S(h) - L_P(h)| > \epsilon\right\} &\le 2\cdot \underset{S,S'\sim P^n}{\mathbb{P}} \left\{ \max_{v\in \mathcal{H}_C} \frac{1}{n}\left|\sum_{i=1}^n \mathbf{1}\{v(X_i)\ne Y_i\} - \mathbf{1}\{v(X_i')\ne Y_i'\}\right| > \frac{\epsilon}{2}\right\}\\[5px]
+&= 2\cdot\underset{S,S'\sim P^n, \sigma\sim \text{unif}\{\pm 1\}^n}{\mathbb{P}}\left\{ \max_{v\in \mathcal{H}_C} \frac{1}{n}\left|\sum_{i=1}^n \sigma_i(\mathbf{1}\{v(X_i)\ne Y_i\} - \mathbf{1}\{v(X_i')\ne Y_i'\})\right| > \frac{\epsilon}{2}\right\}\\[5px]
+&= 2\cdot\underset{S,S'\sim P^n}{\mathbf{E}} \left[ \underset{\sigma\sim \text{unif}\{\pm 1\}^n}{\mathbb{P}}\left\{ \max_{v\in \mathcal{H}_C} \frac{1}{n}\left|\sum_{i=1}^n \sigma_i(\mathbf{1}\{v(X_i)\ne Y_i\} - \mathbf{1}\{v(X_i')\ne Y_i'\})\right| > \frac{\epsilon}{2}\right\}\right] \\[5px]
+&\le 2\cdot\underset{S,S'\sim P^n}{\mathbf{E}} \left[ \sum_{v\in \mathcal{H}_C} \underset{\sigma\sim \text{unif}\{\pm 1\}^n}{\mathbb{P}}\left\{ \frac{1}{n}\left|\sum_{i=1}^n \sigma_i(\mathbf{1}\{v(X_i)\ne Y_i\} - \mathbf{1}\{v(X_i')\ne Y_i'\})\right| > \frac{\epsilon}{2}\right\}\right] \\[5px]
+&\le 2\cdot\underset{S,S'\sim P^n}{\mathbf{E}} \left[ 2|\mathcal{H}_C|e^{-n\epsilon^2/2}\right] \\[5px]
+&\le 4\cdot \Gamma(\mathcal{H}, 2n)\,e^{-n\epsilon^2/2}
+\end{align*}
+$$
+and <u>if $\mathcal{H}$ has finite VC-dimension $d$</u>, then Sauer's lemma implies that for $n\ge d$ (and $n > \frac{2}{\epsilon^2}$ for symmetrization) we have 
+$$
+\underset{S\sim P^n}{\mathbb{P}} \left\{ \sup_{h\in \mathcal{H}} |L_S(h) - L_P(h)| > \epsilon\right\} \le 4\left( \frac{2en}{d}\right)^d e^{-n\epsilon^2/2}\;.
+$$
+and further algebraic manipulation (by setting the rhs equal to $\delta$) yields a sufficient sample complexity $n^{\text{uc}}(\mathcal{H}, \epsilon, \delta)$ in terms of $d$. We note that it is possible to use more sophisticated methods and obtain a tighter sample complexity. 
+
+<u>So finite VC-dimension implies $\mathcal{H}$ has the uniform convergence property, which in turn implies agnostic PAC learnability.</u> It turns out that (in the binary classification setting) finite VC-dimension is also a necessary condition for agnostic PAC learnability. The following result shows that if $\mathsf{VC}(\mathcal{H}) = \infty$ then the function class is too rich and admits adversarial source distributions that prevent learnability. 
+
+---
+
+__Theorem (No-Free-Lunch):__ Let $\hat{h}:(\mathcal{X}\times\mathcal{Y})^n \rightarrow \mathcal{H}$ be any learning algorithm for the task of binary classification with respect to the 0-1 loss. Let $n$ be any sample size, and assume that there exists a subset $C\subseteq \mathcal{X}$ of size $2n$ that is shattered by $\mathcal{X}$. Then there exists a distribution $P$ over $\mathcal{X}\times\{0,1\}$ such that:
+
+1. There exists a function $h^*\in \mathcal{H}$ with $L_P(h^*) = 0$. 
+
+2. With probability at least $\frac{1}{7}$ over training sets of size $n$ drawn iid $S\sim P^n$ we have that $L_P(\hat{h}(S)) \ge \frac{1}{8}$.
+
+We conclude that when $\mathcal{H}$ has infinite VC-dimension it is not PAC learnable by taking $\epsilon <  \frac{1}{8}$ and $\delta < \frac{1}{7}$. 
+
+---
+
+>
+_Proof:_ 
+Note that $|\mathcal{H}_C| = 2^{2n}$ and we enumerate these binary labellings as $v_1, \ldots, v_m$. For each $v_i$ define the corresponding distribution $P_i$ to be uniform over the $2n$ pairs $(x, v_i(x))$ for $x\in C$ (i.e. we pick $x$ from $C$ uniformly at random and deterministically set the label to be $v_i(x)$), and let $h_i \in \mathcal{H}$ be a function whose projection onto $C$ is $v_i$. Clearly $L_{P_i}(h_i) = 0$. Let $V\in \{v_1, \ldots, v_m\}$ be a random labelling drawn according to the uniform distribution (i.e. we set each component of $V$ to be 0 or 1 via an independent fair coin toss). We will show that 
+$$
+\underset{V}{\mathbf{E}}\;\underset{S\sim P_{_V}^n}{\mathbf{E}}\left[ L_{P_{_V}}(\hat{h}(S))\right] \ge \frac{1}{4} \tag{*}
+$$
+which implies that for at least one $v_i$ labelling vector $\mathbf{E}_{_{S\sim P_{i}^n}}\left[ L_{P_{i}}(\hat{h}(S))\right] \ge \frac{1}{4}$ and since 
+$$
+\begin{align*}
+\frac{1}{4} &\le \underset{S\sim P_{i}^n}{\mathbf{E}}\left[ L_{P_{i}}(\hat{h}(S))\right] \\[5px]
+&= \underset{S\sim P_{i}^n}{\mathbf{E}}\left[ L_{P_{i}}(\hat{h}(S)) \cdot \mathbf{1}\left\{L_{P_{i}}(\hat{h}(S)) \ge \frac{1}{8}\right\}\right] + \underset{S\sim P_{i}^n}{\mathbf{E}}\left[ L_{P_{i}}(\hat{h}(S)) \cdot \mathbf{1}\left\{L_{P_{i}}(\hat{h}(S)) < \frac{1}{8}\right\}\right] \\[5px]
+&\le \underset{S\sim P_{i}^n}{\mathbb{P}}\left\{L_{P_{i}}(\hat{h}(S)) \ge \frac{1}{8}\right\} + \frac{1}{8} \left(1 - \underset{S\sim P_{i}^n}{\mathbb{P}}\left\{L_{P_{i}}(\hat{h}(S)) \ge \frac{1}{8}\right\} \right) \\[5px]
+&= \frac{1}{8} + \frac{7}{8}\cdot\underset{S\sim P_{i}^n}{\mathbb{P}}\left\{L_{P_{i}}(\hat{h}(S)) \ge \frac{1}{8}\right\}
+\end{align*}
+$$
+we get the desired conclusion. Now returning to verifying $(^*)$, we define the following terms: a sample $s$ is _consistent_ with the label vector $v$ if $s$ has nonzero probability of being drawn from $P_v^n$, and a sample $s$ is _self-consistent_ if it is consistent with any $v\in \mathcal{H}_C$. Next, we perform the following clever manipulation:
+$$
+\begin{align*}
+\underset{V}{\mathbf{E}}\;\underset{S\sim P_{_V}^n}{\mathbf{E}}\left[ L_{P_{_V}}(\hat{h}(S))\right] &= \underset{V}{\mathbf{E}}\;\underset{S\sim P_{_V}^n}{\mathbf{E}}\left[ L_{P_{_V}}(\hat{h}(S)) \; \middle| \; S \text{ cons. with } V \right] \\[5px]
+&= \underset{V}{\mathbf{E}}\;\underset{S\sim \text{ self-cons.}}{\mathbf{E}}\left[ L_{P_{_V}}(\hat{h}(S)) \; \middle| \; S \text{ cons. with } V \right] \\[5px]
+&= \underset{S\sim \text{ self-cons.}}{\mathbf{E}}\;\underset{V}{\mathbf{E}}\left[ L_{P_{_V}}(\hat{h}(S)) \; \middle| \; S \text{ cons. with } V \right] \\[5px]
+&= \underset{S\sim \text{ self-cons.}}{\mathbf{E}}\;\underset{V}{\mathbf{E}}\left[ \frac{1}{|C|}\sum_{x\in C} \mathbf{1}\left\{ \hat{h}(S)(x) \ne V(x)\right\}  \; \middle| \; S \text{ cons. with } V \right] \\[5px]
+&= \underset{S\sim \text{ self-cons.}}{\mathbf{E}}\;\underset{V}{\mathbf{E}}\left[ \frac{1}{2n}\left(\sum_{x\in C, \,x\in S} \mathbf{1}\left\{ \hat{h}(S)(x) \ne V(x)\right\} + \sum_{x\in C,\,x\not\in S}\mathbf{1}\left\{ \hat{h}(S)(x) \ne V(x)\right\} \right)\; \middle| \; S \text{ cons. with } V \right] \\[5px]
+&= \underset{S\sim \text{ self-cons.}}{\mathbf{E}}\left[ \frac{1}{2n}\sum_{x\in C,\,(x,y)\in S} \mathbf{1}\left\{ \hat{h}(S)(x) \ne y\right\}\right] + \underset{S\sim \text{ self-cons.}}{\mathbf{E}}\;\underset{V}{\mathbf{E}}\left[\frac{1}{2n}\sum_{x\in C, \,x\not\in S}\mathbf{1}\left\{ \hat{h}(S)(x) \ne V(x)\right\}\; \middle| \; S \text{ cons. with } V \right] \\[5px]
+&= \underset{S\sim \text{ self-cons.}}{\mathbf{E}}\left[ \frac{1}{2n}\sum_{x\in C,\,(x,y)\in S} \mathbf{1}\left\{ \hat{h}(S)(x) \ne y\right\}\right] + \underset{S\sim \text{ self-cons.}}{\mathbf{E}}\left[\frac{1}{2n}\cdot\frac{|C\setminus S|}{2}\right] \\[5px]
+&\ge 0 + \underset{S\sim \text{ self-cons.}}{\mathbf{E}}\left[\frac{1}{2n}\cdot\frac{n}{2}\right] \\[5px]
+&= \frac{1}{4}
+\end{align*}
+$$
+where $S \sim \text{ self-cons.}$ indicates that $S$ is drawn uniformly from the set of all self-consistent samples.
+
+---
+
+It is worth distilling the main ideas at play in the proof above. Notice that uniform distributions are ubiquitous and play a key role; the conditioning in the first step allows us to take $S$ to be uniform over the larger set of self-consistent samples, since the conditioning "projects" $S$ back to being uniform over samples that are consistent with $V$. This notational trick enables us to use Fubini's theorem to swap the order of expectations. So now the randomness in the conditional is with respect to $V$ first. Then we split our consideration between those $x\in C$ that appear in $S$ and those that do not; the key fact here is that $|C| = 2n$ while $|S| = n$, so fixing $S$ and enforcing consistency between $S$ and $V$ still allows for at least half of the "bits" in $V$ to be randomly set. This freedom stems from the fact that the set $C$ is shattered by $\mathcal{H}$, so all possible binary labellings are realizable. 
+
+So finally, putting all of these facts together, we have established the following remarkable result.
+
+---
+
+__Theorem (The Fundamental Theorem of Statistical Learning):__ Let $\mathcal{H}$ be a hypothesis class of functions from a domain $\mathcal{X}$ to $\{0, 1\}$ and let the loss function be the 0-1 loss. Then the following are equivalent:
+
+1. $\mathcal{H}$ has finite VC-dimension. 
+
+2. $\mathcal{H}$ has the uniform convergence property. 
+
+3. $\mathcal{H}$ is agnostic PAC learnable (via the ERM rule). 
+
+
+---
+
+
+
+
+
+
+
+
+
+
+
+

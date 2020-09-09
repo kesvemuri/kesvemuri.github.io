@@ -1,0 +1,85 @@
+---
+title: Hypothesis test for the mean
+author: ''
+date: '2019-03-04'
+slug: hypothesis-test-for-the-mean
+categories: ['Basics']
+tags: []
+subtitle: ''
+---
+
+
+
+<p>In this post, we will investigate a topic that is often presented in introductory statistics courses. Consider the following setting: we obtain independent, identically-distributed samples <span class="math display">\[
+Y_1, Y_2, \ldots, Y_n \;\; \overset{\text{iid}}{\sim} \;\; P
+\]</span> and our goal is to estimate the population mean <span class="math inline">\(\mu \doteq \text{E}_{_{Y\sim P}}[Y]\)</span>. For the moment, let’s assume that the population variance, <span class="math inline">\(\sigma^2 \doteq \text{Var}_{_{Y\sim P}}[Y] = \text{E}_{_{Y\sim P}}[(Y - \mu)^2] &gt; 0\)</span> exists and is known. An obvious choice for a <em>point estimate</em> of the mean would be the sample average <span class="math inline">\(\bar{Y} = \frac{1}{n} \sum_{i=1}^n Y_i\)</span>, but we would like to be able to say something about the uncertainty, or variability, in this estimate. Luckily, the <strong>central limit theorem</strong> gives us the convergence in distribution result: <span class="math display">\[
+\frac{\bar{Y} - \mu}{\sigma/\sqrt{n}} \;\;\rightsquigarrow \;\; \mathcal{N}(0, 1)
+\]</span> and for a large enough sample size <span class="math inline">\(n\)</span>, we can rearrange above and make the approximation <span class="math inline">\(\bar{Y} \sim \mathcal{N} \big(\mu, \frac{\sigma^2}{n} \big)\)</span>. Intuitively, the sample mean will fall around the true mean <span class="math inline">\(\mu\)</span>, and as the sample size grows, the variability in the sample mean will drop.</p>
+<p>Since in most real-world situations we wouldn’t know the population variance <span class="math inline">\(\sigma^2\)</span>, we could estimate it from the sample using <span class="math inline">\(S^2 = \frac{1}{n-1}\sum_{i=1}^n (Y_i - \bar{Y})^2\)</span>. If <span class="math inline">\(\text{Var}_{_{Y\sim P}}(S^2) \rightarrow 0\)</span> as <span class="math inline">\(n\rightarrow \infty\)</span>, then using Chebyshev’s inequality we can show that <span class="math inline">\(S^2 \overset{p}{\rightarrow} \sigma^2\)</span> in probability and an application of Slutsky’s theorem yields the desired <span class="math display">\[
+\frac{\bar{Y} - \mu}{S/\sqrt{n}} = \frac{\sigma}{S}\cdot \frac{\bar{Y} - \mu}{\sigma/\sqrt{n}} \;\; \rightsquigarrow \;\; \mathcal{N}(0, 1)\,\,.
+\]</span> So for large <span class="math inline">\(n\)</span> we can use the approximation <span class="math inline">\(\bar{Y} \sim \mathcal{N} \big(\mu, \frac{S^2}{n} \big)\)</span>. In the case of small sample sizes, it is often inappropriate to apply these asymptotic approximations, so in a later post we will discuss exact calculations that can be done under further assumptions on <span class="math inline">\(P\)</span> using the <span class="math inline">\(t\)</span>-distribution.</p>
+<div id="hypothesis-testing" class="section level3">
+<h3>Hypothesis Testing</h3>
+<p>A typical null and alternative hypothesis pair might be <span class="math display">\[
+\mathcal{H}_0 : \mu = \mu_0 \quad, \quad \mathcal{H}_A : \mu \ne \mu_0\,\,.
+\]</span> Under the null hypothesis, we have that <span class="math inline">\(\bar{Y} \sim \mathcal{N}\big(\mu_0, \frac{\sigma^2}{n} \big)\)</span>. It would make sense to reject the null if</p>
+<p><span class="math display">\[
+| \bar{Y} - \mu_0| \ge c \tag{*}
+\]</span> i.e. the sample mean falls far away from the hypothesized true mean, which would be unlikely to happen if the null hypothesis were true. We usually pick <span class="math inline">\(c &gt; 0\)</span> in such a way that the probability of a Type 1 error (rejecting the null when the null is true) is less than some <span class="math inline">\(\alpha\)</span>.</p>
+<p><span class="math display">\[
+\begin{alignat*}{2}
+&amp;\text{Pr}_{_{\mathcal{H}_0}}\Big[ | \bar{Y} - \mu_0| \ge c\Big] = \alpha \\[7px]
+\iff \quad
+&amp;\text{Pr}_{_{\mathcal{H}_0}}\left[ \frac{|\bar{Y} - \mu_0|}{\sigma/\sqrt{n}} \ge \frac{c}{\sigma/\sqrt{n}} \right] = \alpha \\[7px]
+\iff \quad
+&amp;\text{Pr}_{_{\mathcal{H}_0}}\left[ \left\{\frac{\bar{Y} - \mu_0}{\sigma/\sqrt{n}} \ge \frac{c}{\sigma/\sqrt{n}} \right\} \; \cup \; \left\{\frac{\bar{Y} - \mu_0}{\sigma/\sqrt{n}} \le \frac{-c}{\sigma/\sqrt{n}} \right\} \right] = \alpha \\[7px]
+\iff \quad
+&amp;\text{Pr}_{_{Z\sim \mathcal{N}(0,1)}}\left[ \left\{Z \ge \frac{c}{\sigma/\sqrt{n}} \right\} \; \cup \; \left\{Z \le \frac{-c}{\sigma/\sqrt{n}} \right\} \right] = \alpha \\[7px]
+\iff \quad
+&amp; \text{Pr}_{_{Z\sim \mathcal{N}(0,1)}}\left[ Z \ge \frac{c}{\sigma/\sqrt{n}} \right] = \frac{\alpha}{2} \\[7px]
+\end{alignat*}
+\]</span> so if <span class="math inline">\(z^*_{\alpha/2}\)</span> denotes the cutoff point for the standard normal distribution, which for <span class="math inline">\(\alpha = .05\)</span> will be</p>
+<pre class="r"><code>alpha = .05
+qnorm(p = .05/2, mean = 0, sd = 1, lower.tail = FALSE)</code></pre>
+<pre><code>## [1] 1.959964</code></pre>
+<p>we see that we should set <span class="math inline">\(c = z^*_{\alpha/2} \cdot \frac{\sigma}{\sqrt{n}}\)</span>. The rejection region <span class="math inline">\((^*)\)</span> is depicted in the interactive graphic below.</p>
+<iframe src="https://www.desmos.com/calculator/6yhz4cwerj?embed" width="500px" height="500px" style="border: 1px solid #ccc" frameborder="0">
+</iframe>
+<p>Geometrically, it is easy to see that we can rephrase the rejection criterion in terms of the p-value computed from our data <span class="math inline">\(p(\bar{Y})\)</span> as follows: <span class="math display">\[
+\begin{align*}
+&amp;|\bar{Y} - \mu_0| \ge z^*_{\alpha/2} \cdot \frac{\sigma}{\sqrt{n}}  \tag{**}\\[7px]
+\iff \quad
+&amp;\frac{|\bar{Y} - \mu_0|}{\sigma/\sqrt{n}} \ge z^*_{\alpha/2} \\[7px]
+\iff \quad 
+&amp; p(\bar{Y}) \doteq \text{Pr}_{_{Z \sim \mathcal{N}(0,1)}} \left[ |Z| \ge \frac{|\bar{Y} - \mu_0|}{\sigma/\sqrt{n}}\right] \le \alpha\,\,.
+\end{align*}
+\]</span> Confidence intervals are another popular, and perhaps more intuitive, way of thinking about the process of testing a null hypothesis. Notice that <span class="math display">\[
+|\bar{Y} - \mu_0| &lt; z^*_{\alpha/2} \cdot \frac{\sigma}{\sqrt{n}} \quad \iff \quad 
+\mu_0 \in \left[\bar{Y} - z^*_{\alpha/2} \cdot \frac{\sigma}{\sqrt{n}} \;\;,\;\; \bar{Y} + z^*_{\alpha/2} \cdot \frac{\sigma}{\sqrt{n}} \right]
+\]</span> Since the event <span class="math inline">\((^{**})\)</span> occurs with proability <span class="math inline">\(\alpha\)</span>, the event above occurs with probability <span class="math inline">\(1-\alpha\)</span>. In summary:</p>
+<blockquote>
+<p>We reject the null hypothesis at level <span class="math inline">\(\alpha\)</span> if <span class="math inline">\(\bar{Y}\)</span> falls in the rejection region <span class="math inline">\((^{**})\)</span>, or equivalently, if the p-value <span class="math inline">\(p(\bar{Y}) \le \alpha\)</span>, or equivalently, if <span class="math inline">\(\mu_0\)</span> is not contained in the <span class="math inline">\(1-\alpha\)</span> confidence interval</p>
+</blockquote>
+<p>This correspondence is illustrated in the previous graphic, where the confidence interval is drawn in red. Note that one advantage of the p-value approach is that the computation of a p-value doesn’t require specification of the significance level <span class="math inline">\(\alpha\)</span>.</p>
+</div>
+<div id="power-analysis" class="section level3">
+<h3>Power Analysis</h3>
+<p>If, as the experimenter, we have the freedom to set the sample size <span class="math inline">\(n\)</span>, how should we go about it? To address this question, it is useful to define the <strong>power function</strong>: <span class="math display">\[
+\begin{align*}
+\beta(\mu) &amp;\doteq \text{Pr}_{_{\mu}} \Big[ \text{test rejects the null} \Big] \\[7px]
+&amp;= \text{Pr}_{_{\mu}}\left[ |\bar{Y} - \mu_0| \ge z^*_{\alpha/2} \cdot \frac{\sigma}{\sqrt{n}}\right]
+\end{align*}
+\]</span> Under the null hypothesis (i.e. when the null is true), <span class="math inline">\(\mu = \mu_0\)</span> and the above probability is precisely <span class="math inline">\(\alpha\)</span>, the probability of a Type 1 Error. When <span class="math inline">\(\mu \ne \mu_0\)</span> it is the test’s <u> power, or the probability of rejecting the null when the null is false </u>. The power is equal to 1 minus the <u> Type 2 Error, the probability of accepting the null when the null is false </u>.</p>
+<p>Using the fact that <span class="math inline">\(\bar{Y} \sim \mathcal{N}\big(\mu, \frac{\sigma^2}{n} \big)\)</span>, we can rewrite the expression above as follows: <span class="math display">\[
+\begin{align*}
+\beta(\mu) &amp;= \text{Pr}_{_{\mu}}\left[ |\bar{Y} - \mu_0| \ge z^*_{\alpha/2} \cdot \frac{\sigma}{\sqrt{n}}\right] \\[7px]
+&amp;= \text{Pr}_{_{\mu}}\left[ \left\{\bar{Y} - \mu_0 \ge z^*_{\alpha/2} \cdot \frac{\sigma}{\sqrt{n}}\right \} \; \cup \; \left\{\bar{Y} - \mu_0 \le -z^*_{\alpha/2} \cdot \frac{\sigma}{\sqrt{n}}\right \} \right]  \tag{***}\\[7px]
+&amp;= \text{Pr}_{_{\mu}}\left[ \left\{\frac{\bar{Y} - \mu}{\sigma/\sqrt{n}} \ge z^*_{\alpha/2} + \frac{\mu_0 - \mu}{\sigma/\sqrt{n}}\right \} \; \cup \; \left\{\frac{\bar{Y} - \mu}{\sigma/\sqrt{n}} \le -z^*_{\alpha/2} + \frac{\mu_0 - \mu}{\sigma/\sqrt{n}}\right \} \right]  \\[7px]
+&amp;= \text{Pr}_{_{Z\sim \mathcal{N}(0, 1)}}\left[ \left\{Z\ge z^*_{\alpha/2} + \frac{\mu_0 - \mu}{\sigma/\sqrt{n}}\right \} \; \cup \; \left\{Z \le -z^*_{\alpha/2} + \frac{\mu_0 - \mu}{\sigma/\sqrt{n}}\right \} \right]  \,\,.\\[7px]
+&amp;= \text{Pr}_{_{Z\sim \mathcal{N}(0, 1)}}\left[ Z\ge z^*_{\alpha/2} + \frac{\mu_0 - \mu}{\sigma/\sqrt{n}} \right]\; +\; \text{Pr}_{_{Z\sim \mathcal{N}(0, 1)}} \left[ Z \le -z^*_{\alpha/2} + \frac{\mu_0 - \mu}{\sigma/\sqrt{n}} \right] \\[7px]
+\end{align*}
+\]</span> In this form, it is clear that, as we noted above, <span class="math inline">\(\beta(\mu_0) = \alpha\)</span>. While the last line makes the dependence on <span class="math inline">\(\mu\)</span> explicit, we prefer <span class="math inline">\((^{***})\)</span> for visualization purposes. Below is an interactive plot demonstrating the behaviour of <span class="math inline">\(\beta(\mu)\)</span> with <span class="math inline">\(\alpha = .05\)</span> and a default setting of <span class="math inline">\(n=1\)</span>. We are essentially calculating the probability of the test’s rejection region under a family of distributions on <span class="math inline">\(\bar{Y}\)</span> parametrized by <span class="math inline">\(\mu\)</span>.</p>
+<iframe src="https://www.desmos.com/calculator/bmufucglug?embed" width="500px" height="500px" style="border: 1px solid #ccc" frameborder="0">
+</iframe>
+<p>We may want to choose <span class="math inline">\(n\)</span> so that if <span class="math inline">\(|\mu - \mu_0| \ge \epsilon\)</span> then <span class="math inline">\(\beta(\mu) \ge 1-\delta\)</span>, i.e. if the true <span class="math inline">\(\mu\)</span> is far enough away from the null hypothesis value <span class="math inline">\(\mu_0\)</span>, then we will reject the null with some nontrivial probability. In the plot above, this corresponds to holding <span class="math inline">\(\mu\)</span> a fixed distance away from <span class="math inline">\(\mu_0\)</span> and raising the <span class="math inline">\(n\)</span>-slider until the desired power is achieved. The power function above is quite complicated, so we would probably need to solve for <span class="math inline">\(n\)</span> numerically.</p>
+</div>

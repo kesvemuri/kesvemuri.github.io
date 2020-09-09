@@ -1,0 +1,52 @@
+---
+title: Pearson’s chi-squared test
+author: ''
+date: '2019-06-26'
+categories:
+  - Basics
+slug: pearson-s-chi-squared-test
+---
+
+
+
+<p>The setting we consider is as follows: we observe categorical data across <span class="math inline">\(k\)</span> cells <span class="math display">\[
+X^{(i)} \;\overset{\text{iid}}{\sim}\; \text{Cat}(\{e_1,...,e_k\}, \; p) \qquad \text{for }\;i = 1,\ldots,n
+\]</span> where we represent the <span class="math inline">\(X^{(i)}\)</span> draws as unit vectors, or more simply we observe the counts <span class="math display">\[
+(N_1,\ldots,N_k) \doteq \sum_{i=1}^n X^{(i)}\;\sim\; \text{Multinom}(\{1,\ldots,k\},\; p)
+\]</span> where <span class="math inline">\(\sum_{i=1}^k N_j = n\)</span>, and we would like to conduct inference on the unknown vector of proportions <span class="math inline">\(p\)</span> using the (maximum likelihood) estimator consisting of sample proportions <span class="math display">\[
+\hat{p} \doteq \left( \frac{N_1}{n},\, \ldots \,, \frac{N_k}{n}\right)\;.
+\]</span> This is often accomplished using the Pearson chi-squared statistic, which is defined as a sum over the <span class="math inline">\(k\)</span> cells: <span class="math display">\[
+S \doteq \underbrace{\sum_{j=1}^k \frac{(\text{observed} - \text{expected})^2}{\text{expected}}}_{\text{mnemonic}} = \sum_{j=1}^k \frac{(N_j - np_j)^2}{np_j} = \sqrt{n}(\hat{p} - p)\, P^{-1}\, \sqrt{n}(\hat{p} - p)
+\]</span> where <span class="math inline">\(P = \text{diag}(p)\)</span>. If we assume that <span class="math inline">\(n\)</span> is large, we can derive an asymptotic distribution for this statistic. The central limit theorem tells us that <span class="math display">\[
+Y \doteq \sqrt{n}(\hat{p} - p)\; \rightsquigarrow\; \mathcal{N}_k(0, \; \text{var}(X))
+\]</span> and this asymptotic variance can be evaluated as <span class="math display">\[
+\begin{align*}
+\text{var}(X) &amp;= \text{E}(XX^\mathsf{T}) - \text{E}(X)\text{E}(X)^\mathsf{T} \\[5px]
+&amp;= \Big[\text{E}(X_iX_j) \Big]_{1\,1}^{k\,k} - pp^\mathsf{T} \\[5px]
+&amp;= P - pp^\mathsf{T}\;.
+\end{align*}
+\]</span> We note that <span class="math inline">\(P - pp^\mathsf{T}\)</span> is singular since <span class="math inline">\(1^\mathsf{T}(P - pp^\mathsf{T}) 1 = 0\)</span>; this is because <span class="math inline">\(Y\)</span> actually lives on a linear subspace of <span class="math inline">\(\mathbb{R}^k\)</span> defined by the constraint <span class="math inline">\(1^\mathsf{T} Y = 0\)</span>. So the asymptotic normal distribution is ``degnerate&quot; in the above form as it is really a <span class="math inline">\(k-1\)</span> dimensional gaussian. We will now address this difficulty.</p>
+<p>First, we see that we can do a rescaling and apply Slutsky’s theorem to obtain <span class="math display">\[
+P^{-1/2}Y \; \rightsquigarrow\; \mathcal{N}_k \big(0, \; I - \sqrt{p}\sqrt{p}^\mathsf{T} \big)
+\]</span> and it is simple to check that <span class="math inline">\(I - \sqrt{p}\sqrt{p}^\mathsf{T}\)</span> is a projection matrix since it is symmetric and idempotent. Now we can employ the following basic lemma:</p>
+<hr />
+<p><strong>Lemma 1:</strong></p>
+<p>Suppose <span class="math inline">\(M \in \mathbb{R}^{k\times k}\)</span> is a projection matrix. Then every eigenvalue of <span class="math inline">\(M\)</span> equals 0 or 1. Let <span class="math display">\[
+r \doteq \text{rank}(M) = \# \text{ eigenvalues of M equal to 1}\;.
+\]</span> Then if <span class="math inline">\(Z \sim \mathcal{N}_k(0, M)\)</span>, it follows that <span class="math inline">\(Z^\mathsf{T}Z \sim \chi^2_r\)</span>.</p>
+<hr />
+<blockquote>
+<p><em>Proof.</em> We can write the eigenvalue decomposition <span class="math inline">\(M = Q^\mathsf{T}\Lambda Q\)</span> where <span class="math inline">\(\Lambda\)</span> is diagonal and has entries equal to the eigenvalues of <span class="math inline">\(M\)</span>; since <span class="math inline">\(M\)</span> is a projection matrix, these entries are either 1 or 0. It follows that <span class="math display">\[
+Q^\mathsf{T}Z\; \sim \; \mathcal{N}_k (0, \Lambda)
+\]</span> and then we have <span class="math display">\[
+Z^\mathsf{T}Z = (Q^\mathsf{T}Z)^\mathsf{T}(Q^\mathsf{T}Z)\; \sim \; \chi^2_r\;.
+\]</span></p>
+</blockquote>
+<hr />
+<p>If we apply the eigenvalue decomposition to our covariance matrix and use the fact that it is a projection matrix, we see that <span class="math inline">\(\text{rank}(I - \sqrt{p}\sqrt{p}^\mathsf{T}) = \text{tr}(I - \sqrt{p}\sqrt{p}^\mathsf{T}) = k-1\)</span>. Now applying the previous lemma yields <span class="math display">\[
+S = Y^\mathsf{T} P^{-1} Y = (P^{-1/2}Y)^\mathsf{T}(P^{-1/2}Y)\; \rightsquigarrow \; \chi^2_{k-1}\;.
+\]</span> So if we want to test a null hypothesis of the form <span class="math display">\[
+\mathcal{H}_0: p = p_0
+\]</span> we can calculate the corresponding Pearson statistic <span class="math display">\[
+S = n\,(\hat{p} - p_0) P_0^{-1}(\hat{p} - p_0)
+\]</span> which asymptotically follows a <span class="math inline">\(\chi^2_{k-1}\)</span> distribution, and we reject <span class="math inline">\(\mathcal{H}_0\)</span> if <span class="math inline">\(S &gt; \chi^2_{k-1, 1 - \alpha}\)</span> where <span class="math inline">\(\alpha\)</span> is the size of the test.</p>

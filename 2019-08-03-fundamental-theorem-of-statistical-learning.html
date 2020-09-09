@@ -1,0 +1,170 @@
+---
+title: "VC theory"
+author: ''
+date: '2019-08-03'
+output: pdf_document
+slug: VC theory
+categories: Machine Learning
+---
+
+
+
+<blockquote>
+<p>Note: most of the material in this post follows the presentation in <em>Understanding Machine Learning: From Theory to Algorithms</em> by Shalev-Shwartz and Ben-David</p>
+</blockquote>
+<p>As usual, we start with a training set of labeled examples <span class="math inline">\(S\)</span> <span class="math display">\[
+(X_1, Y_1)\;, \;\ldots\;,\; (X_n, Y_n) \overset{\text{iid}}{\sim} P
+\]</span> from some joint distribution over <span class="math inline">\(\mathcal{X}\times \mathcal{Y}\)</span>, and our goal is to output a predictive function <span class="math inline">\(h: \mathcal{X} \rightarrow \mathcal{Y}\)</span> that has low <em>generalization error</em> or <em>risk</em> <span class="math display">\[
+L_P(h) = \underset{{(X,Y)\sim P}}{\mathbf{E}}\left[ \ell(h, (X,Y))\right]\;.
+\]</span> For binary classification problems with <span class="math inline">\(\mathcal{Y} = \{0, 1\}\)</span>, we often employ the 0-1 loss <span class="math inline">\(\ell_{01}(h, (x,y)) = \mathbf{1}(h(x)\ne y)\)</span> which yields the risk <span class="math inline">\(L_P(h) = \mathbb{P}\left\{ h(X) \ne Y \right\}\)</span>. This is statistically intuitive, but for computational reasons (which we don’t consider in this post), it might make sense to think about different losses.</p>
+<p>Since we don’t know <span class="math inline">\(P\)</span>, we can’t compute the risk. We can approximate it with the <em>empirical risk</em>, defined as <span class="math display">\[
+L_S(h) = \frac{1}{n}\sum_{i=1}^n \ell(h, (X_i, Y_i))
+\]</span> which in the binary classification 0-1 loss case, equals <span class="math inline">\(L_S(h) = \frac{1}{n} \sum_{i=1}^n \mathbf{1}(h(X_i) \ne Y_i)\)</span> and records the fraction of mistakes that <span class="math inline">\(h\)</span> makes on the training set. If we limit our consideration to some hypothesis class of functions <span class="math inline">\(\mathcal{H}\)</span> that represents our prior knowledge, and we let <span class="math inline">\(h^*\)</span> denote the minimizer of the risk <span class="math inline">\(L_P(h)\)</span> over <span class="math inline">\(\mathcal{H}\)</span>, the following definition encapsulates a natural notion of learnability.</p>
+<hr />
+<p><strong>Definition 1:</strong> A hypothesis class <span class="math inline">\(\mathcal{H}\)</span> is <em>agnostic (proper) PAC learnable</em> if there exists a learning algorithm <span class="math inline">\(\hat{h}:(\mathcal{X}\times\mathcal{Y})^n \rightarrow \mathcal{H}\)</span> that satisfies the following property for every <span class="math inline">\(\epsilon, \delta \in (0,1)\)</span> and every source distribution <span class="math inline">\(P\)</span>, once presented with enough samples <span class="math inline">\(n \ge n(\mathcal{H}, \epsilon, \delta)\)</span>: with probability at least <span class="math inline">\(1 - \delta\)</span> over training sets of size <span class="math inline">\(n\)</span> drawn iid <span class="math inline">\(S\sim P^n\)</span> <span class="math display">\[
+L_P(\hat{h}(S)) \le L_P(h^*) + \epsilon\;.
+\]</span></p>
+<hr />
+<p>In effect, all this is saying is that it is desirable to have consistency in the sense that <span class="math inline">\(L_P(\hat{h}(S)) \rightarrow L_P(h^*)\)</span> in probability. Since <span class="math inline">\(h^*\)</span> minimizes the risk, it makes sense to take <span class="math inline">\(\hat{h}\)</span> to minimize the empirical risk. This turns out to be the only learning rule of statistical relevance, and it is called the <em>ERM learning rule</em>: <span class="math display">\[
+\hat{h}(S) = \arg\min_{h\in \mathcal{H}}\; L_S(h)\;.
+\]</span> So for large enough sample size <span class="math inline">\(n\)</span>, we want <span class="math inline">\(L_S(\hat{h}(S)) \approx L_P(h^*)\)</span>. For any fixed classifier <span class="math inline">\(h \in \mathcal{H}\)</span>, this is simply a consequence of LLN, but since <span class="math inline">\(\hat{h}(S)\)</span> is random and depends on the training data, we need a stronger result than LLN. The cartoon graphic below (recreated from the <em>Generalization I</em> lecture given at Simons Institute) illustrates the situtation.</p>
+<div class="figure">
+<img src="/images/empirical_process_1.jpg" />
+
+</div>
+<p>Broadly speaking, we want <span class="math inline">\(\mathcal{H}\)</span> to be large enough to “get close” to capturing the best function <span class="math inline">\(h^* \approx \tilde{h}\)</span> (i.e. low <em>bias</em>), but we also want <span class="math inline">\(\mathcal{H}\)</span> to be small enough so that our <span class="math inline">\(\hat{h}(S)\)</span> obtained from the sample “curve” <span class="math inline">\(L_S(h)\)</span> is a good approximation <span class="math inline">\(\hat{h}(S) \approx h^*\)</span> (i.e. low <em>variance</em>). Clearly the second criterion will be satisfied if the sampled curve <span class="math inline">\(L_S(h)\)</span> is uniformly close to <span class="math inline">\(L_P(h)\)</span> for all <span class="math inline">\(h\in \mathcal{H}\)</span> with high probability. This leads us to another definition.</p>
+<hr />
+<p><strong>Definition 2:</strong> A hypothesis class <span class="math inline">\(\mathcal{H}\)</span> has the <em>uniform convergence property</em> (and is called a <em>Glivenko-Cantelli class</em>) if it satisfies the following property for every <span class="math inline">\(\epsilon, \delta \in (0,1)\)</span> and every source distribution <span class="math inline">\(P\)</span>, once given enough training samples <span class="math inline">\(n\ge n^{\text{uc}}(\mathcal{H}, \epsilon, \delta)\)</span>: with probability at least <span class="math inline">\(1 - \delta\)</span> over training sets of size <span class="math inline">\(n\)</span> drawn iid <span class="math inline">\(S\sim P^n\)</span> <span class="math display">\[
+\forall h\in \mathcal{H},  \quad |L_S(h) - L_P(h)| \le \epsilon\;.
+\]</span></p>
+<hr />
+<p>It’s not hard to show that if <span class="math inline">\(\mathcal{H}\)</span> has the uniform convergence property with sample complexity <span class="math inline">\(n^{\text{uc}}(\mathcal{H}, \epsilon, \delta)\)</span>, then <span class="math inline">\(\mathcal{H}\)</span> is agnostic PAC learnable (via the ERM learning rule) with sample complexity <span class="math inline">\(n(\mathcal{H}, \epsilon, \delta) \le n^{\text{uc}}(\mathcal{H}, \epsilon/2, \delta)\)</span>. This can be seen as follows: take a fixed sample <span class="math inline">\(S\in (\mathcal{X}\times\mathcal{Y})^n\)</span> that falls in the “uniform convergence” event above for parameter values <span class="math inline">\(\epsilon/2, \delta\)</span>. For such an <span class="math inline">\(S\)</span>, we have that for all <span class="math inline">\(h\in \mathcal{H}\)</span> <span class="math display">\[
+\begin{align*}
+L_P(\hat{h}(S)) \le L_S(\hat{h}(S)) + \frac{\epsilon}{2} \le L_S(h) + \frac{\epsilon}{2} \le L_P(h) + \frac{\epsilon}{2} + \frac{\epsilon}{2} = L_P(h) + \epsilon
+\end{align*}
+\]</span> where the first and third inequalities rely on the fact that <span class="math inline">\(S\)</span> is in the uniform convergence event. Therefore, the above statement holds with probability at least <span class="math inline">\(1 - \delta\)</span>, and since <span class="math inline">\(h\)</span> is arbitrary, we can take the infimum on the rhs over <span class="math inline">\(\mathcal{H}\)</span> to recover the agnostic PAC learnability requirement.</p>
+<p><u>So possession of the uniform convergence property is sufficient for <span class="math inline">\(\mathcal{H}\)</span> to be agnostic PAC learnable.</u> We will now describe a sufficient condition for <span class="math inline">\(\mathcal{H}\)</span> to have the uniform convergence property in the binary classification case. First we note that the uniform convergence property can be expressed as follows: for every <span class="math inline">\(\epsilon, \delta \in (0,1)\)</span> and every source distribution <span class="math inline">\(P\)</span>, once given enough training samples <span class="math inline">\(n\ge n^{\text{uc}}(\mathcal{H}, \epsilon, \delta)\)</span> <span class="math display">\[
+\underset{S\sim P^n}{\mathbb{P}} \left\{ \sup_{h\in \mathcal{H}} |L_S(h) - L_P(h)| &gt; \epsilon\right\} &lt; \delta
+\]</span> so it is logical to pursue bounds of the form <span class="math display">\[
+\underset{S\sim P^n}{\mathbb{P}} \left\{ \sup_{h\in \mathcal{H}} |L_S(h) - L_P(h)| &gt; \epsilon\right\} &lt; \underbrace{ \binom{\text{function class}}{\text{complexity of } \mathcal{H}} \cdot \binom{\text{concentration bound}}{\text{for any fixed } h}}_{\text{goes to 0 as } n\rightarrow \infty \text{ with fixed }\epsilon} \tag{*}
+\]</span> since then we can set the rhs equal to <span class="math inline">\(\delta\)</span> and solve for the appropriate sample size <span class="math inline">\(n\)</span>. Recall that Hoeffding’s inequality can be applied for a fixed <span class="math inline">\(h\in \mathcal{H}\)</span> to obtain the concentration bound <span class="math display">\[
+\underset{S\sim P^n}{\mathbb{P}}\{|L_S(h) - L_P(h)| &gt; \epsilon\} \le 2e^{-2n\epsilon^2}
+\]</span> which is exponentially decreasing in <span class="math inline">\(n\)</span>; the key is that we need our notion of function class complexity of <span class="math inline">\(\mathcal{H}\)</span> to grow slowly enough with <span class="math inline">\(n\)</span> to be killed off by the concentration bound in the limit. Now we are ready to introduce more definitions.</p>
+<hr />
+<p><strong>Definition 3:</strong> The <em>growth function</em> of a hypothesis class <span class="math inline">\(\mathcal{H}\)</span> is defined as <span class="math display">\[
+\Gamma(\mathcal{H}, n) = \sup_{\{x_1, \ldots, x_n\} \subseteq \mathcal{X}} \left| \mathcal{H}_{x_1, \ldots, x_n} \right|
+\]</span> where <span class="math display">\[
+\mathcal{H}_{x_1, \ldots, x_n} = \left\{(h(x_1), \ldots, h(x_n)): h\in \mathcal{H} \right\}
+\]</span> is the set of all possible <em>behaviors</em> (or <em>realizations</em>) of functions in <span class="math inline">\(\mathcal{H}\)</span> on the set of points <span class="math inline">\(\{x_1, \ldots, x_n\}\)</span>. Since a class of binary functions <span class="math inline">\(\mathcal{H}\)</span> can be identified with the collection <span class="math inline">\(\{h^{-1}(1): h\in \mathcal{H}\}\)</span>, the growth function of <span class="math inline">\(\mathcal{H}\)</span> <span class="math display">\[
+\Gamma(\mathcal{H}, n) = \sup_{C\subseteq \mathcal{X},\; |C|=n} |\{h^{-1}(1)\cap C: h\in \mathcal{H}\}
+\]</span> counts the number of subsets of <span class="math inline">\(C=\{x_1, \ldots, x_n\}\)</span> that get “picked out” by <span class="math inline">\(\mathcal{H}\)</span>. The <em>VC dimension</em> of a class of binary functions <span class="math inline">\(\mathcal{H}\)</span> is defined as <span class="math display">\[
+\mathsf{VC}(\mathcal{H}) = \sup \{n: \Gamma(\mathcal{H}, n) = 2^n\}
+\]</span> or in words, the maximum <span class="math inline">\(n\)</span> such that there exists a set <span class="math inline">\(C\subseteq \mathcal{X}\)</span> of size <span class="math inline">\(n\)</span> on which <span class="math inline">\(\mathcal{H}\)</span> picks out all possible subsets; such a set <span class="math inline">\(C\)</span> is said to be <em>shattered</em> by <span class="math inline">\(\mathcal{H}\)</span>.</p>
+<hr />
+<p>It turns out that we can prove bounds of the form <span class="math inline">\((^*)\)</span> using the growth function <span class="math inline">\(\Gamma(\mathcal{H}, n)\)</span> as the function class complexity. What makes these bounds useful is the surprising fact that if <span class="math inline">\(\mathsf{VC}(\mathcal{H}) &lt; \infty\)</span>, the growth function grows only polynomially for <span class="math inline">\(n \ge \mathsf{VC}(\mathcal{H})\)</span>. We state this famous result below without proof.</p>
+<hr />
+<p><strong>Theorem (Sauer’s Lemma):</strong> If <span class="math inline">\(d\doteq \mathsf{VC}(\mathcal{H}) &lt; \infty\)</span> then <span class="math display">\[
+\Gamma(\mathcal{H}, n) \le \sum_{i=0}^d \binom{n}{i} \le \left(\frac{en}{d}\right)^d
+\]</span> where the second inequality holds for <span class="math inline">\(n\ge d\)</span>.</p>
+<hr />
+<p>With this fact in hand, we now work to establish uniform bounds of the form <span class="math inline">\((^*)\)</span>. Notice that the growth function is a combinatorial measure of complexity; it characterizes <span class="math inline">\(\mathcal{H}\)</span> in terms of its action on finite sets of points. The technique of symmetrization allows us to massage the lhs of <span class="math inline">\((^*)\)</span> into a form amenable for bounding by the growth function.</p>
+<hr />
+<p><strong>Lemma (Symmetrization):</strong> For any hypothesis class <span class="math inline">\(\mathcal{H}\)</span>, source distribution <span class="math inline">\(P\)</span>, <span class="math inline">\(\epsilon &gt; 0\)</span>, and sample size <span class="math inline">\(n &gt; \frac{2}{\epsilon^2}\)</span>: <span class="math display">\[
+\underset{S\sim P^n}{\mathbb{P}} \left\{ \sup_{h\in \mathcal{H}} |L_S(h) - L_P(h)| &gt; \epsilon\right\} \le 2\, 
+\underset{S,S&#39;\sim P^n}{\mathbb{P}} \left\{ \sup_{h\in \mathcal{H}} |L_S(h) - L_{S&#39;}(h)| &gt; \frac{\epsilon}{2}\right\}
+\]</span> where <span class="math inline">\(S, S&#39;\)</span> are iid training sets (<span class="math inline">\(S&#39;\)</span> is called a <em>ghost sample</em>).</p>
+<hr />
+<blockquote>
+<p><em>Proof.</em> For simplicity, we will assume that <span class="math display">\[
+h_S = \arg\sup_{h\in \mathcal{H}}\; |L_S(h) - L_P(h)|
+\]</span> is realized. Then we make the claim <span class="math display">\[
+\mathbf{1}\left\{ |L_S(h_S) - L_P(h_S)| &gt; \epsilon\right\} \cdot \mathbf{1}\left\{ |L_{S&#39;}(h_S) - L_{P}(h_S)| \le \frac{\epsilon}{2}\right\} \le \mathbf{1}\left\{  |L_S(h_S) - L_{S&#39;}(h_S)| &gt; \frac{\epsilon}{2}\right\} \tag{*}
+\]</span> which follows from a simple triangle inequality argument: <span class="math display">\[
+\begin{align*}
+\epsilon &amp;&lt;  |L_S(h_S) - L_P(h_S)| \\[5px]
+&amp;\le |L_S(h_S) - L_{S&#39;}(h_S)| + |L_{S&#39;}(h_S) - L_P(h_S)| \\[5px]
+&amp;\le  |L_S(h_S) - L_{S&#39;}(h_S)| + \frac{\epsilon}{2}\;.
+\end{align*}
+\]</span> Now we note that <span class="math display">\[
+\begin{align*}
+\underset{S&#39;\sim P^n}{\mathbb{P}}\left\{ |L_{S&#39;}(h_S) - L_{P}(h_S)| &gt; \frac{\epsilon}{2}\right\}
+&amp;\le \frac{4}{\epsilon^2}\cdot \text{Var}\left[ L_{S&#39;}(h_S)\right] \\[5px]
+&amp;= \frac{4}{n\epsilon^2}\cdot \text{Var}\big[\mathbf{1}\{h_S(X)\ne Y\}\big] \\[5px] 
+&amp;\le \frac{1}{n\epsilon^2}
+\end{align*}
+\]</span> where we used the fact that the maximum variance of a random variable taking values in <span class="math inline">\([0,1]\)</span> is <span class="math inline">\(\frac{1}{4}\)</span> (realized by a fair coin flip), which implies that for <span class="math inline">\(n &gt; \frac{2}{\epsilon^2}\)</span> <span class="math display">\[
+\underset{S&#39;\sim P^n}{\mathbb{P}}\left\{ |L_{S&#39;}(h_S) - L_{P}(h_S)| \le \frac{\epsilon}{2}\right\} &gt; \frac{1}{2}\;.
+\]</span> So taking expectations on both sides of <span class="math inline">\((^*)\)</span> over <span class="math inline">\(S&#39;\)</span> for <span class="math inline">\(n &gt; \frac{2}{\epsilon^2}\)</span> gives <span class="math display">\[
+\mathbf{1}\left\{ |L_S(h_S) - L_P(h_S)| &gt; \epsilon\right\} \le 2 \cdot \underset{S&#39;\sim P^n}{\mathbb{P}}\left\{ |L_S(h_S) - L_{S&#39;}(h_S)| &gt; \frac{\epsilon}{2}\right\}
+\]</span> which implies that <span class="math display">\[
+\mathbf{1}\left\{ \sup_{h\in \mathcal{H}} |L_S(h) - L_P(h)| &gt; \epsilon\right\} \le 2 \cdot \underset{S&#39;\sim P^n}{\mathbb{P}}\left\{ \sup_{h\in \mathcal{H}} |L_S(h) - L_{S&#39;}(h)| &gt; \frac{\epsilon}{2}\right\}
+\]</span> and finally taking expectation over <span class="math inline">\(S\)</span> above gives the desired result.</p>
+</blockquote>
+<hr />
+<p>Symmetrization allows us to restrict our consideration to the behavior of each <span class="math inline">\(h\)</span> on the finite samples <span class="math inline">\(S, S&#39;\)</span>. The above lemma implies that <span class="math display">\[
+\begin{align*}
+\underset{S\sim P^n}{\mathbb{P}} \left\{ \sup_{h\in \mathcal{H}} |L_S(h) - L_P(h)| &gt; \epsilon\right\} &amp;\le 2\cdot \underset{S,S&#39;\sim P^n}{\mathbb{P}} \left\{ \sup_{h\in \mathcal{H}} |L_S(h) - L_{S&#39;}(h)| &gt; \frac{\epsilon}{2}\right\} \\[5px]
+&amp;= 2\cdot \underset{S,S&#39;\sim P^n}{\mathbb{P}} \left\{ \max_{v\in \mathcal{H}_C} \frac{1}{n}\left|\sum_{i=1}^n \mathbf{1}\{v(X_i)\ne Y_i\} - \mathbf{1}\{v(X_i&#39;)\ne Y_i&#39;\}\right| &gt; \frac{\epsilon}{2}\right\}\\[5px]
+\end{align*}
+\]</span> where <span class="math inline">\(C = \{ X_1, \ldots, X_n, X_1&#39;, \ldots, X_n&#39;\}\)</span> is a set of <span class="math inline">\(2n\)</span> examples from <span class="math inline">\(\mathcal{X}\)</span>. We would like to union bound over <span class="math inline">\(\mathcal{H}_C\)</span> and bound the argument using Hoeffding’s inequality, but the problem is that <span class="math inline">\(\mathcal{H}_C\)</span> is a random collection and can’t be pulled out of the probability expression directly. If we condition on <span class="math inline">\(S, S&#39;\)</span>, <span class="math inline">\(\mathcal{H}_C\)</span> is a fixed collection and we can use the union bound, but then there is no more randomness left to apply Hoeffding’s inequality. So somewhat unintuitively, the trick is to introduce <em>more randomness</em> in a clever way. First, we observe that if <span class="math inline">\(Z, Z&#39;\)</span> are iid random variables and <span class="math inline">\(\sigma\sim \text{unif}\{\pm 1\}\)</span> is an independent (fair) coin flip, then <span class="math display">\[
+Z - Z&#39; \overset{d}{=} \sigma(Z-Z&#39;)
+\]</span> since <span class="math display">\[
+\mathbb{P}\{ \sigma(Z - Z&#39;) \le t\} = \frac{1}{2}\cdot \mathbb{P}\{Z - Z&#39; \le t\} + \frac{1}{2}\cdot \mathbb{P} \{Z&#39; - Z \le t\} = \mathbb{P}\{Z - Z&#39;\le t\}\;.
+\]</span> It then follows that <span class="math display">\[
+\max_{v\in \mathcal{H}_C} \frac{1}{n}\left|\sum_{i=1}^n \mathbf{1}\{v(X_i)\ne Y_i\} - \mathbf{1}\{v(X_i&#39;)\ne Y_i&#39;\}\right| \overset{d}{=} \max_{v\in \mathcal{H}_C} \frac{1}{n}\left|\sum_{i=1}^n \sigma_i(\mathbf{1}\{v(X_i)\ne Y_i\} - \mathbf{1}\{v(X_i&#39;)\ne Y_i&#39;\})\right|
+\]</span> so continuing our calculation from before, <span class="math display">\[
+\begin{align*}
+\underset{S\sim P^n}{\mathbb{P}} \left\{ \sup_{h\in \mathcal{H}} |L_S(h) - L_P(h)| &gt; \epsilon\right\} &amp;\le 2\cdot \underset{S,S&#39;\sim P^n}{\mathbb{P}} \left\{ \max_{v\in \mathcal{H}_C} \frac{1}{n}\left|\sum_{i=1}^n \mathbf{1}\{v(X_i)\ne Y_i\} - \mathbf{1}\{v(X_i&#39;)\ne Y_i&#39;\}\right| &gt; \frac{\epsilon}{2}\right\}\\[5px]
+&amp;= 2\cdot\underset{S,S&#39;\sim P^n, \sigma\sim \text{unif}\{\pm 1\}^n}{\mathbb{P}}\left\{ \max_{v\in \mathcal{H}_C} \frac{1}{n}\left|\sum_{i=1}^n \sigma_i(\mathbf{1}\{v(X_i)\ne Y_i\} - \mathbf{1}\{v(X_i&#39;)\ne Y_i&#39;\})\right| &gt; \frac{\epsilon}{2}\right\}\\[5px]
+&amp;= 2\cdot\underset{S,S&#39;\sim P^n}{\mathbf{E}} \left[ \underset{\sigma\sim \text{unif}\{\pm 1\}^n}{\mathbb{P}}\left\{ \max_{v\in \mathcal{H}_C} \frac{1}{n}\left|\sum_{i=1}^n \sigma_i(\mathbf{1}\{v(X_i)\ne Y_i\} - \mathbf{1}\{v(X_i&#39;)\ne Y_i&#39;\})\right| &gt; \frac{\epsilon}{2}\right\}\right] \\[5px]
+&amp;\le 2\cdot\underset{S,S&#39;\sim P^n}{\mathbf{E}} \left[ \sum_{v\in \mathcal{H}_C} \underset{\sigma\sim \text{unif}\{\pm 1\}^n}{\mathbb{P}}\left\{ \frac{1}{n}\left|\sum_{i=1}^n \sigma_i(\mathbf{1}\{v(X_i)\ne Y_i\} - \mathbf{1}\{v(X_i&#39;)\ne Y_i&#39;\})\right| &gt; \frac{\epsilon}{2}\right\}\right] \\[5px]
+&amp;\le 2\cdot\underset{S,S&#39;\sim P^n}{\mathbf{E}} \left[ 2|\mathcal{H}_C|e^{-n\epsilon^2/2}\right] \\[5px]
+&amp;\le 4\cdot \Gamma(\mathcal{H}, 2n)\,e^{-n\epsilon^2/2}
+\end{align*}
+\]</span> and <u>if <span class="math inline">\(\mathcal{H}\)</span> has finite VC-dimension <span class="math inline">\(d\)</span></u>, then Sauer’s lemma implies that for <span class="math inline">\(n\ge d\)</span> (and <span class="math inline">\(n &gt; \frac{2}{\epsilon^2}\)</span> for symmetrization) we have <span class="math display">\[
+\underset{S\sim P^n}{\mathbb{P}} \left\{ \sup_{h\in \mathcal{H}} |L_S(h) - L_P(h)| &gt; \epsilon\right\} \le 4\left( \frac{2en}{d}\right)^d e^{-n\epsilon^2/2}\;.
+\]</span> and further algebraic manipulation (by setting the rhs equal to <span class="math inline">\(\delta\)</span>) yields a sufficient sample complexity <span class="math inline">\(n^{\text{uc}}(\mathcal{H}, \epsilon, \delta)\)</span> in terms of <span class="math inline">\(d\)</span>. We note that it is possible to use more sophisticated methods and obtain a tighter sample complexity.</p>
+<p><u>So finite VC-dimension implies <span class="math inline">\(\mathcal{H}\)</span> has the uniform convergence property, which in turn implies agnostic PAC learnability.</u> It turns out that (in the binary classification setting) finite VC-dimension is also a necessary condition for agnostic PAC learnability. The following result shows that if <span class="math inline">\(\mathsf{VC}(\mathcal{H}) = \infty\)</span> then the function class is too rich and admits adversarial source distributions that prevent learnability.</p>
+<hr />
+<p><strong>Theorem (No-Free-Lunch):</strong> Let <span class="math inline">\(\hat{h}:(\mathcal{X}\times\mathcal{Y})^n \rightarrow \mathcal{H}\)</span> be any learning algorithm for the task of binary classification with respect to the 0-1 loss. Let <span class="math inline">\(n\)</span> be any sample size, and assume that there exists a subset <span class="math inline">\(C\subseteq \mathcal{X}\)</span> of size <span class="math inline">\(2n\)</span> that is shattered by <span class="math inline">\(\mathcal{X}\)</span>. Then there exists a distribution <span class="math inline">\(P\)</span> over <span class="math inline">\(\mathcal{X}\times\{0,1\}\)</span> such that:</p>
+<ol style="list-style-type: decimal">
+<li><p>There exists a function <span class="math inline">\(h^*\in \mathcal{H}\)</span> with <span class="math inline">\(L_P(h^*) = 0\)</span>.</p></li>
+<li><p>With probability at least <span class="math inline">\(\frac{1}{7}\)</span> over training sets of size <span class="math inline">\(n\)</span> drawn iid <span class="math inline">\(S\sim P^n\)</span> we have that <span class="math inline">\(L_P(\hat{h}(S)) \ge \frac{1}{8}\)</span>.</p></li>
+</ol>
+<p>We conclude that when <span class="math inline">\(\mathcal{H}\)</span> has infinite VC-dimension it is not PAC learnable by taking <span class="math inline">\(\epsilon &lt; \frac{1}{8}\)</span> and <span class="math inline">\(\delta &lt; \frac{1}{7}\)</span>.</p>
+<hr />
+<blockquote>
+<p><em>Proof:</em> Note that <span class="math inline">\(|\mathcal{H}_C| = 2^{2n}\)</span> and we enumerate these binary labellings as <span class="math inline">\(v_1, \ldots, v_m\)</span>. For each <span class="math inline">\(v_i\)</span> define the corresponding distribution <span class="math inline">\(P_i\)</span> to be uniform over the <span class="math inline">\(2n\)</span> pairs <span class="math inline">\((x, v_i(x))\)</span> for <span class="math inline">\(x\in C\)</span> (i.e. we pick <span class="math inline">\(x\)</span> from <span class="math inline">\(C\)</span> uniformly at random and deterministically set the label to be <span class="math inline">\(v_i(x)\)</span>), and let <span class="math inline">\(h_i \in \mathcal{H}\)</span> be a function whose projection onto <span class="math inline">\(C\)</span> is <span class="math inline">\(v_i\)</span>. Clearly <span class="math inline">\(L_{P_i}(h_i) = 0\)</span>. Let <span class="math inline">\(V\in \{v_1, \ldots, v_m\}\)</span> be a random labelling drawn according to the uniform distribution (i.e. we set each component of <span class="math inline">\(V\)</span> to be 0 or 1 via an independent fair coin toss). We will show that <span class="math display">\[
+\underset{V}{\mathbf{E}}\;\underset{S\sim P_{_V}^n}{\mathbf{E}}\left[ L_{P_{_V}}(\hat{h}(S))\right] \ge \frac{1}{4} \tag{*}
+\]</span> which implies that for at least one <span class="math inline">\(v_i\)</span> labelling vector <span class="math inline">\(\mathbf{E}_{_{S\sim P_{i}^n}}\left[ L_{P_{i}}(\hat{h}(S))\right] \ge \frac{1}{4}\)</span> and since <span class="math display">\[
+\begin{align*}
+\frac{1}{4} &amp;\le \underset{S\sim P_{i}^n}{\mathbf{E}}\left[ L_{P_{i}}(\hat{h}(S))\right] \\[5px]
+&amp;= \underset{S\sim P_{i}^n}{\mathbf{E}}\left[ L_{P_{i}}(\hat{h}(S)) \cdot \mathbf{1}\left\{L_{P_{i}}(\hat{h}(S)) \ge \frac{1}{8}\right\}\right] + \underset{S\sim P_{i}^n}{\mathbf{E}}\left[ L_{P_{i}}(\hat{h}(S)) \cdot \mathbf{1}\left\{L_{P_{i}}(\hat{h}(S)) &lt; \frac{1}{8}\right\}\right] \\[5px]
+&amp;\le \underset{S\sim P_{i}^n}{\mathbb{P}}\left\{L_{P_{i}}(\hat{h}(S)) \ge \frac{1}{8}\right\} + \frac{1}{8} \left(1 - \underset{S\sim P_{i}^n}{\mathbb{P}}\left\{L_{P_{i}}(\hat{h}(S)) \ge \frac{1}{8}\right\} \right) \\[5px]
+&amp;= \frac{1}{8} + \frac{7}{8}\cdot\underset{S\sim P_{i}^n}{\mathbb{P}}\left\{L_{P_{i}}(\hat{h}(S)) \ge \frac{1}{8}\right\}
+\end{align*}
+\]</span> we get the desired conclusion. Now returning to verifying <span class="math inline">\((^*)\)</span>, we define the following terms: a sample <span class="math inline">\(s\)</span> is <em>consistent</em> with the label vector <span class="math inline">\(v\)</span> if <span class="math inline">\(s\)</span> has nonzero probability of being drawn from <span class="math inline">\(P_v^n\)</span>, and a sample <span class="math inline">\(s\)</span> is <em>self-consistent</em> if it is consistent with any <span class="math inline">\(v\in \mathcal{H}_C\)</span>. Next, we perform the following clever manipulation: <span class="math display">\[
+\begin{align*}
+\underset{V}{\mathbf{E}}\;\underset{S\sim P_{_V}^n}{\mathbf{E}}\left[ L_{P_{_V}}(\hat{h}(S))\right] &amp;= \underset{V}{\mathbf{E}}\;\underset{S\sim P_{_V}^n}{\mathbf{E}}\left[ L_{P_{_V}}(\hat{h}(S)) \; \middle| \; S \text{ cons. with } V \right] \\[5px]
+&amp;= \underset{V}{\mathbf{E}}\;\underset{S\sim \text{ self-cons.}}{\mathbf{E}}\left[ L_{P_{_V}}(\hat{h}(S)) \; \middle| \; S \text{ cons. with } V \right] \\[5px]
+&amp;= \underset{S\sim \text{ self-cons.}}{\mathbf{E}}\;\underset{V}{\mathbf{E}}\left[ L_{P_{_V}}(\hat{h}(S)) \; \middle| \; S \text{ cons. with } V \right] \\[5px]
+&amp;= \underset{S\sim \text{ self-cons.}}{\mathbf{E}}\;\underset{V}{\mathbf{E}}\left[ \frac{1}{|C|}\sum_{x\in C} \mathbf{1}\left\{ \hat{h}(S)(x) \ne V(x)\right\}  \; \middle| \; S \text{ cons. with } V \right] \\[5px]
+&amp;= \underset{S\sim \text{ self-cons.}}{\mathbf{E}}\;\underset{V}{\mathbf{E}}\left[ \frac{1}{2n}\left(\sum_{x\in C, \,x\in S} \mathbf{1}\left\{ \hat{h}(S)(x) \ne V(x)\right\} + \sum_{x\in C,\,x\not\in S}\mathbf{1}\left\{ \hat{h}(S)(x) \ne V(x)\right\} \right)\; \middle| \; S \text{ cons. with } V \right] \\[5px]
+&amp;= \underset{S\sim \text{ self-cons.}}{\mathbf{E}}\left[ \frac{1}{2n}\sum_{x\in C,\,(x,y)\in S} \mathbf{1}\left\{ \hat{h}(S)(x) \ne y\right\}\right] + \underset{S\sim \text{ self-cons.}}{\mathbf{E}}\;\underset{V}{\mathbf{E}}\left[\frac{1}{2n}\sum_{x\in C, \,x\not\in S}\mathbf{1}\left\{ \hat{h}(S)(x) \ne V(x)\right\}\; \middle| \; S \text{ cons. with } V \right] \\[5px]
+&amp;= \underset{S\sim \text{ self-cons.}}{\mathbf{E}}\left[ \frac{1}{2n}\sum_{x\in C,\,(x,y)\in S} \mathbf{1}\left\{ \hat{h}(S)(x) \ne y\right\}\right] + \underset{S\sim \text{ self-cons.}}{\mathbf{E}}\left[\frac{1}{2n}\cdot\frac{|C\setminus S|}{2}\right] \\[5px]
+&amp;\ge 0 + \underset{S\sim \text{ self-cons.}}{\mathbf{E}}\left[\frac{1}{2n}\cdot\frac{n}{2}\right] \\[5px]
+&amp;= \frac{1}{4}
+\end{align*}
+\]</span> where <span class="math inline">\(S \sim \text{ self-cons.}\)</span> indicates that <span class="math inline">\(S\)</span> is drawn uniformly from the set of all self-consistent samples.</p>
+</blockquote>
+<hr />
+<p>It is worth distilling the main ideas at play in the proof above. Notice that uniform distributions are ubiquitous and play a key role; the conditioning in the first step allows us to take <span class="math inline">\(S\)</span> to be uniform over the larger set of self-consistent samples, since the conditioning “projects” <span class="math inline">\(S\)</span> back to being uniform over samples that are consistent with <span class="math inline">\(V\)</span>. This notational trick enables us to use Fubini’s theorem to swap the order of expectations. So now the randomness in the conditional is with respect to <span class="math inline">\(V\)</span> first. Then we split our consideration between those <span class="math inline">\(x\in C\)</span> that appear in <span class="math inline">\(S\)</span> and those that do not; the key fact here is that <span class="math inline">\(|C| = 2n\)</span> while <span class="math inline">\(|S| = n\)</span>, so fixing <span class="math inline">\(S\)</span> and enforcing consistency between <span class="math inline">\(S\)</span> and <span class="math inline">\(V\)</span> still allows for at least half of the “bits” in <span class="math inline">\(V\)</span> to be randomly set. This freedom stems from the fact that the set <span class="math inline">\(C\)</span> is shattered by <span class="math inline">\(\mathcal{H}\)</span>, so all possible binary labellings are realizable.</p>
+<p>So finally, putting all of these facts together, we have established the following remarkable result.</p>
+<hr />
+<p><strong>Theorem (The Fundamental Theorem of Statistical Learning):</strong> Let <span class="math inline">\(\mathcal{H}\)</span> be a hypothesis class of functions from a domain <span class="math inline">\(\mathcal{X}\)</span> to <span class="math inline">\(\{0, 1\}\)</span> and let the loss function be the 0-1 loss. Then the following are equivalent:</p>
+<ol style="list-style-type: decimal">
+<li><p><span class="math inline">\(\mathcal{H}\)</span> has finite VC-dimension.</p></li>
+<li><p><span class="math inline">\(\mathcal{H}\)</span> has the uniform convergence property.</p></li>
+<li><p><span class="math inline">\(\mathcal{H}\)</span> is agnostic PAC learnable (via the ERM rule).</p></li>
+</ol>
+<hr />
