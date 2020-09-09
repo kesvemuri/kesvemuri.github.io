@@ -1,0 +1,190 @@
+---
+title: 'kernel regression'
+output: html_document
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+header-includes:
+   - \usepackage{esvect}
+   - \usepackage{amsmath}
+---
+
+```{r setup, include=FALSE}
+setwd("~/Desktop/UChicago/Blog")
+
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+```
+
+
+---
+
+In this post, we derive an upper bound on the rate of convergence of mean-squared error for a kernel regression estimator. To be more precise, let $\mathcal{X}\times \mathcal{Y} = \mathbb{R}^d \times \mathbb{R}$, and $(X, Y) \sim \mathbb{P}$ where $\mathbb{P}$ is a joint distribution over $\mathcal{X}\times \mathcal{Y}$. Let $\mathbb{P}_X$ denote the marginal distribution of $X$. The regression function is denoted by 
+$$
+\eta(x) = \mathbf{E}[Y \mid X = x]
+$$
+and it is known that this function minimizes the mean-squared error
+$$
+\eta = \arg\min_{m: \mathcal{X}\rightarrow \mathcal{Y}} \;\mathbf{E}[(Y - m(X))^2]\;.
+$$
+Suppose we only have access to $\mathbb{P}$ through iid samples $S_n = \{(X_1, Y_1), \ldots, (X_n, Y_n)\}$. The kernel estimator we analyze here is given by 
+$$
+\hat{\eta}(x) = \frac{\sum_{i=1}^n Y_i\cdot \mathbf{1}\{\lVert x - X_i \rVert \le h\}}{\sum_{i=1}^n \mathbf{1}\{\lVert x - X_i \rVert \le h\}}
+$$
+if the denominator is nonzero, and zero otherwise; $h > 0$ is the bandwidth. Basically, we estimate the value of $\eta$ at $x\in \mathcal{X}$ by taking a weighted average of the observed $Y$ values in the ball $B(x; h)$. We can also replace the indicator with a different kernel function $K(\lVert x - X_i\rVert / h)$ to get smoother estimators. 
+
+The minimum possible (Bayes) risk in the mean-squared sense is $R^* = \mathbf{E}[(Y - \eta(X))^2] = \mathbf{E}[\text{Var}(Y \mid X)]$. The risk of our estimator, conditional on the training data, is given by 
+$$
+\begin{align*}
+R(\hat{\eta}) &\doteq \mathbf{E}[(Y - \hat{\eta}(X))^2 \mid S_n] \\[5px]
+&= \mathbf{E}[(Y - \eta(X) + \eta(X) - \hat{\eta}(X))^2 \mid S_n] \\[5px]
+&= R(\eta) + \mathbf{E}[(Y - \eta(X))(\eta(X) - \hat{\eta}(X)) \mid S_n] + \mathbf{E}[(\hat{\eta}(X) - \eta(X))^2 \mid S_n] \\[5px]
+&= R(\eta) + \mathbf{E}[(\hat{\eta}(X) - \eta(X))^2 \mid S_n] 
+\end{align*}
+$$
+where the cross term vanishes after conditioning on $X$ first and then un-conditioning. So, to analyze the excess risk, we need to analyze the quantity
+$$
+\mathbf{E}[R(\hat{\eta})] - R(\eta) = \mathbf{E}[(\hat{\eta}(X) - \eta(X))^2]\;. 
+$$
+
+---
+
+__Theorem : __  Suppose that the distribution $\mathbb{P}_X$ has compact support, and let $\text{Var}(Y \mid X = x) = \sigma^2 < \infty$. We also assume that $\eta$ is Lipschitz continuous with constant $L$: i.e. for every pair $x, x'\in \mathcal{X}$
+$$
+|\eta(x) - \eta(x')| \le L \cdot \lVert x - x'\rVert \;.
+$$
+Then we have that the excess risk is bounded by
+$$
+\mathbf{E}[(\hat{\eta}(X) - \eta(X))^2] \le c_1h^2 + \frac{c_2}{nh^d}
+$$
+so if we take $h \asymp n^{-1/(d + 2)}$ then the bound is $O(n^{-2/(d+2)})$. 
+
+---
+
+*Proof : * First, we define 
+$$
+\bar{\eta}(x) = \frac{\sum_{i=1}^n \eta(X_i)\cdot \mathbf{1}\{\lVert x - X_i \rVert \le h\}}{\sum_{i=1}^n \mathbf{1}\{\lVert x - X_i \rVert \le h\}}
+$$
+and consider the event where the denominator is nonzero $A(x) = \{\sum_{i=1}^n \mathbf{1}\{\lVert x - X_i \rVert \le h \} > 0 \}$. Now note that we have
+$$
+\begin{align*}
+\mathbf{E}[(\hat{\eta}(X) - \eta(X))^2] &= \mathbf{E}[(\hat{\eta}(X) - \bar{\eta}(X))^2]  + \mathbf{E}[(\bar{\eta}(X) - \eta(X))^2] \\[5px]
+&= \mathbf{E}\left[ \int (\hat{\eta}(x) - \bar{\eta}(x))^2 \,\mathbb{P}_X(dx)\right] + \mathbf{E}\left[ \int (\bar{\eta}(x) - \eta(x))^2 \,\mathbb{P}_X(dx)\right] \\[5px]
+&= \int \mathbf{E}\left[ (\hat{\eta}(x) - \bar{\eta}(x))^2 \right] \,\mathbb{P}_X(dx) + \mathbf{E}\left[ \int (\bar{\eta}(x) - \eta(x))^2 \,\mathbb{P}_X(dx)\right] \;. \tag{*}
+\end{align*}
+$$
+Let's look at the integrand of the first term (variance) conditional on $X_{1:n}$, so the only randomness is from $Y_{1:n}$:
+$$
+\begin{align*}
+\mathbf{E}\left[ (\hat{\eta}(x) - \bar{\eta}(x))^2 \mid X_{1:n}\right] &= \mathbf{E}\left[ \left(\frac{\sum_{i=1}^n (Y_i - \eta(X_i))\cdot \mathbf{1}\{ \lVert x - X_i\rVert \le h\}}{\sum_{i=1}^n \mathbf{1}\{ \lVert x - X_i\rVert \le h\}}\right)^2 \;\middle|\; X_{1:n}\right] \\[5px]
+&= \frac{\sum_{i=1}^n \text{Var}(Y_i \mid X_i) \cdot \mathbf{1}\{ \lVert x - X_i\rVert \le h\}}{(\sum_{i=1}^n \mathbf{1}\{ \lVert x - X_i\rVert \le h\})^2}\cdot \mathbf{1}_{A(x)} \\[5px]
+&\le \frac{\sigma^2}{\sum_{i=1}^n \mathbf{1}\{ \lVert x - X_i\rVert \le h\}}\cdot \mathbf{1}_{A(x)}
+\end{align*}
+$$
+where both $\hat{\eta}(x)$ and $\bar{\eta}(x)$ are zero on $A(x)^c$ so we don't have to worry about that situation. Now let's look at the integrand of the second term (bias) in $(^*)$. We have by Jensen's inequality and the Lipschitz property of $\eta$:
+$$
+\begin{align*}
+(\bar{\eta}(x) - \eta(x))^2 &= \left(\frac{\sum_{i=1}^n (\eta(X_i) - \eta(x))\cdot \mathbf{1}\{ \lVert x - X_i\rVert \le h\}}{\sum_{i=1}^n \mathbf{1}\{ \lVert x - X_i\rVert \le h\}}\right)^2 \cdot \mathbf{1}_{A(x)} + \eta(x)^2\cdot \mathbf{1}_{A(x)^c} \\[5px]
+&\le \frac{\sum_{i=1}^n (\eta(X_i) - \eta(x))^2\cdot \mathbf{1}\{ \lVert x - X_i\rVert \le h\}}{\sum_{i=1}^n \mathbf{1}\{ \lVert x - X_i\rVert \le h\}} \cdot \mathbf{1}_{A(x)} + \eta(x)^2\cdot \mathbf{1}_{A(x)^c} \\[5px]
+&\le L^2h^2\cdot \mathbf{1}_{A(x)} + \eta(x)^2\cdot \mathbf{1}_{A(x)^c} \\[5px]
+&\le  L^2h^2 + \eta(x)^2\cdot \mathbf{1}_{A(x)^c} \\[5px]
+\end{align*}
+$$
+Plugging these results into $(^*)$ gives
+$$
+\mathbf{E}[(\hat{\eta}(X) - \eta(X))^2] \le \int  \mathbf{E}\left[\frac{\sigma^2}{\sum_{i=1}^n \mathbf{1}\{ \lVert x - X_i\rVert \le h\}}\cdot \mathbf{1}_{A(x)} \right]  \, \mathbb{P}_X(dx) + L^2h^2 + \int\eta(x)^2\cdot \mathbf{E}\left[\mathbf{1}_{A(x)^c} \right]\, \mathbb{P}_X(dx)\;. \tag{**}
+$$
+Now we revisit the first term. We need to control over the inverse of a binomially distributed random variable, but only on the event where it is nonzero. Here is a lemma that does exactly this:
+
+---
+
+__Lemma 1 : __ Let $Z \sim \text{Binom}(n, q)$. Then 
+$$
+\mathbf{E} \left[ \frac{\mathbf{1}\{ Z > 0 \}}{Z}\right] \le \frac{2}{nq}\;.
+$$
+
+---
+
+*Proof : * 
+$$
+\begin{align*}
+\mathbf{E} \left[ \frac{\mathbf{1}\{ Z > 0 \}}{Z}\right]  &\le \mathbf{E}\left[ \frac{2}{1 + Z}\right] \\[5px]
+&= \sum_{k=0}^n \frac{2}{k+1} \cdot \binom{n}{k}q^k(1-q)^{n-k} \\[5px]
+&= \frac{2}{(n+1)q}\cdot\sum_{k=0}^n\binom{n+1}{k+1}q^{k+1}(1-q)^{n-k} \\[5px]
+&\le \frac{2}{(n+1)q}\cdot\sum_{k=0}^n\binom{n+1}{k}q^{k}(1-q)^{n-k} \\[5px]
+&= \frac{2}{(n+1)q}\cdot (q + (1 - q))^{n+1} = \frac{2}{(n+1)q} \le \frac{2}{nq}\;.
+\end{align*}
+$$
+
+---
+
+With this lemma in hand, we can see that 
+$$
+\int\mathbf{E}\left[\frac{\sigma^2}{\sum_{i=1}^n \mathbf{1}\{ \lVert x - X_i\rVert \le h\}}\cdot \mathbf{1}_{A(x)} \right]\, \mathbb{P}_X(dx) \le \frac{2\sigma^2}{n}\cdot \int\frac{1}{\mathbb{P}_X(B(x; h))}\, \mathbb{P}_X(dx)\;.
+$$
+To finish bounding this term, we need a "volumetric" argument to control the integral. 
+
+---
+
+__Lemma 2 : __ Let $\text{supp}(\mathbb{P}_X)$ be contained in some ball of radius $r$ (recall that we assume $\mathbb{P}_X$ is compactly supported). There exists of $M = O(1/h^d)$ points $z_1, \ldots, z_M$ such that the support is covered at scale $h/2$: 
+$$
+\text{supp}(\mathbb{P}_X) \subseteq \bigcup_{j=1}^M B(z_j; h/2)\;.
+$$
+
+---
+
+*Proof : * Let $z_1, \ldots, z_M$ be the largest set of points in $B(0; r)$ such that $\lVert z_i - z_j\rVert \ge h/2$ for each pair of indices $i,j$. The maximality of the set implies that every point in $B(0; r)$ is captured by some $B(z_i; h/2)$. We also note that the balls $B(z_i; h/4)$ are disjoint and their union is contained in $B(0; r + h/4)$:
+$$
+M\cdot \text{vol}(B(0; h/4)) \le \text{vol}(B(0; r + h/4))\;.
+$$
+This implies that
+$$
+M\cdot (h/4)^d\cdot \text{vol}(B(0; 1)) \le (r + h/4)^d \cdot \text{vol}(B(0; 1))
+$$
+which tells us that $M \le (4r/h + 1)^d = O(1/h^d)$. 
+
+---
+
+Continuing where we left off, we have that
+$$
+\begin{align*}
+\frac{2\sigma^2}{n}\cdot \int\frac{1}{\mathbb{P}_X(B(x; h))}\, \mathbb{P}_X(dx) &\le \frac{2\sigma^2}{n}\cdot\sum_{j = 1}^M \int\frac{\mathbf{1}\{x\in B(z_j; h/2)\}}{\mathbb{P}_X(B(x; h))}\, \mathbb{P}_X(dx) \\[5px]
+&\le \frac{2\sigma^2}{n}\cdot\sum_{j = 1}^M \int\frac{\mathbf{1}\{x\in B(z_j; h/2)\}}{\mathbb{P}_X(B(z_j; h/2))}\, \mathbb{P}_X(dx) \\[5px]
+&= \frac{2\sigma^2}{n} \cdot M \le \frac{c_1}{nh^d}\;.
+\end{align*}
+$$
+
+Finally, we need to deal with the third term in $(^{**})$ which is the last part of the bias. We have that
+$$
+\begin{align*}
+\int\eta(x)^2\cdot \mathbf{E}\left[\mathbf{1}_{A(x)^c} \right]\, \mathbb{P}_X(dx) &\le \left(\sup_x \, \eta(x)^2 \right)\cdot \int (1 - \mathbb{P}(B(x; h)))^n\, \mathbb{P}_X(dx) \\[5px]
+&\le \left(\sup_x \, \eta(x)^2 \right)\cdot \int e^{-n\mathbb{P}(B(x; h))}\, \mathbb{P}_X(dx) \\[5px]
+&= \left(\sup_x \, \eta(x)^2 \right)\cdot \int e^{-n\mathbb{P}(B(x; h))} \cdot \frac{n\mathbb{P}(B(x; h))}{n\mathbb{P}(B(x; h))}\, \mathbb{P}_X(dx) \\[5px]
+&\le \left(\sup_x \, \eta(x)^2 \right) \cdot \left(\sup_u \, ue^{-u} \right) \cdot \frac{1}{n}\cdot \int \frac{1}{\mathbb{P}(B(x; h))}\, \mathbb{P}_X(dx) \\[5px]
+&\le \frac{c_2}{nh^d}\;.
+\end{align*}
+$$
+
+Collecting the terms, we obtain the desired $O(h^2 + 1/(nh^d))$ bound on the excess risk. 
+
+---
+
+A couple of remarks are in order. 
+
+- After setting the optimal bandwidth to minimize the bound, we get a convergence rate of $O(n^{-2/(d+2)})$. The sample size scales very poorly with the dimension $d$, a annoying phenomenon known as the "curse of dimensionality". If we want to control the excess risk at $\epsilon$, we need $n\ge (1/\epsilon)^{(d+2)/2}$ samples which grows exponentially fast in $d$. 
+
+- A similar analysis can be performed under the stronger assumption that $\eta$ lies in a Holder class $\Sigma(\beta, L)$ which contains $\beta - 1$ times differentiable functions whose $(\beta-1)^{\text{th}}$ derivative is Lipschitz with constant $L$. This will yield an excess risk bound of $O(n^{-2\beta / (2\beta + d)})$, and it turns out that this is the minimax rate over this class of distributions. Here, we only analyzed the case where $\beta = 1$.
+
+
+
+---
+
+### References
+
+1. https://people.cs.umass.edu/~akshay/courses/cs690m/files/lec7.pdf
+2. http://www.stat.cmu.edu/~larry/=sml/NonparRegression.pdf
+3. Gyorfi, Kohler, Krzyzak and Walk (2002). A Distribution Free Theory of Nonparametric
+Regression. Springer.
+
+
+
+
