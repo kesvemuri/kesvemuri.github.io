@@ -1,0 +1,22 @@
+  {
+    "manifest_version": 2,
+    "name": "Playlister",
+    "description" : "Base Level Extension",
+    "version": "1.0",
+    "browser_action": {
+      "default_popup": "popup.html",
+      "default_icon": "icon.png", 
+      "default_title": "Create new playlist"
+    }, 
+    "background": {
+      "scripts": ["background.js"]
+    }, 
+    "content_scripts": [
+      {
+        "matches": ["*://www.youtube.com/watch?v=*"],
+        "js": ["content.js"]
+      }
+    ], 
+    "permissions": ["tabs"], 
+    "content_security_policy": "script-src 'self' https://apis.google.com; object-src 'self'"
+  }
